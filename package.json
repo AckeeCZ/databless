@@ -8,7 +8,7 @@
   },
   "author": "Jiri Smolik <jiri.smolik@ackee.cz>",
   "license": "ISC",
-  "peerDependencies": {
+  "dependencies": {
     "bookshelf": "^0.13.3",
     "knex": "^0.14.6",
     "mysql": "^2.15.0",
