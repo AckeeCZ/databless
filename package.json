@@ -7,5 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jiri Smolik <jiri.smolik@ackee.cz>",
-  "license": "ISC"
+  "license": "ISC",
+  "peerDependencies": {
+    "bookshelf": "^0.13.3",
+    "knex": "^0.14.6",
+    "mysql": "^2.15.0",
+    "bookshelf-camelcase": "2.0.1",
+    "bookshelf-paranoia": "^0.11.0"
+  }
 }
