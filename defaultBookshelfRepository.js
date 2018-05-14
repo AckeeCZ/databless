@@ -135,7 +135,7 @@ create.withDetailById = (bookshelf, Model, data, options) =>
 
 const destroy = (bookshelf, Model, queryParams, options) => {
     return queryModel(Model, queryParams, options)
-        .destroy(options);
+        .destroy(defaults({ require: false }, options));
 };
 
 const destroyById = (bookshelf, Model, id, options) =>
@@ -148,7 +148,7 @@ const update = (bookshelf, Model, queryParams, updateData, options) => {
     return getModelFields(bookshelf, Model)
         .then(fields =>
             queryModel(Model, queryParams, options)
-                .save(snakelize(pick(updateData, fields)), defaults({ method: 'update' }, options))
+                .save(snakelize(pick(updateData, fields)), defaults({ method: 'update', require: false }, options))
         )
         .then(serializer(options));
 };
