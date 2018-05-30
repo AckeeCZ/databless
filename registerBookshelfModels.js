@@ -9,7 +9,8 @@ module.exports = (bookshelf, input) => {
             return fs.readdirSync(input)
                 .filter(x => x.endsWith('.js'))
                 .forEach(modelModuleName => {
-                    require(path.join(input, modelModuleName))(bookshelf); // eslint-disable-line global-require, import/no-dynamic-require
+                    const bootstrapModel = require(path.join(input, modelModuleName));
+                    (bootstrapModel.default || bootstrapModel)(bookshelf);
                 });
         }
         throw new TypeError('Input must be directory.');
