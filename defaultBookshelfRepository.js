@@ -146,13 +146,14 @@ const detailById = (bookshelf, Model, id, options) =>
 
 const update = (bookshelf, Model, queryParams, updateData, options) => {
     return getModelFields(bookshelf, Model)
-        .then(fields => Promise.resolve(pick(updateData, fields)))
-        .then(filteredData => (
-            isEmpty(filteredData)
+        .then(fields => {
+            const filteredData = pick(updateData, fields);
+
+            return isEmpty(filteredData)
                 ? Promise.resolve(null)
                 : queryModel(Model, queryParams, options)
                     .save(snakelize(filteredData), defaults({ method: 'update', require: false }, options))
-        ))
+        })
         .then(serializer(options));
 };
 
