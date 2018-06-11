@@ -1,4 +1,4 @@
-const { defaults, identity, keys, pick, camelCase, pickBy, negate, isArray, forEach } = require('lodash');
+const { defaults, identity, keys, pick, camelCase, pickBy, negate, isArray, isEmpty, forEach } = require('lodash');
 const snakelize = require('./utils/snakelize');
 
 const timestampAdder = (hasTimestamps) => (
@@ -146,10 +146,13 @@ const detailById = (bookshelf, Model, id, options) =>
 
 const update = (bookshelf, Model, queryParams, updateData, options) => {
     return getModelFields(bookshelf, Model)
-        .then(fields =>
-            queryModel(Model, queryParams, options)
-                .save(snakelize(pick(updateData, fields)), defaults({ method: 'update', require: false }, options))
-        )
+        .then(fields => Promise.resolve(pick(updateData, fields)))
+        .then(filteredData => (
+            isEmpty(filteredData)
+                ? Promise.resolve(null)
+                : queryModel(Model, queryParams, options)
+                    .save(snakelize(filteredData), defaults({ method: 'update', require: false }, options))
+        ))
         .then(serializer(options));
 };
 
