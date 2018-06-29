@@ -57,10 +57,23 @@ const paginate = (options = {}) => {
     };
 };
 
+const count = (options = {}, tableName) => {
+    if (!tableName) {
+        throw new Error('Missing table name for count!');
+    }
+
+    return qb => {
+        if (options.count) {
+            qb.countDistinct(`${tableName}.id AS total`);
+        }
+    };
+};
+
 const queryModel = (Model, queryParams, options) => {
     return Model
         .query(qb => {
             select(queryParams, options)(qb);
+            count(options, Model.forge().tableName)(qb);
             paginate(options)(qb);
         });
 };
@@ -69,6 +82,9 @@ const serializer = (options = {}) =>
     (result) => {
         if (options.raw) {
             return result;
+        }
+        if (options.count) {
+            return result && result.head().get('total') || 0;
         }
         if (result && result.toJSON) {
             return result.toJSON(options.toJSON);
@@ -152,7 +168,7 @@ const update = (bookshelf, Model, queryParams, updateData, options) => {
             return isEmpty(filteredData)
                 ? Promise.resolve(null)
                 : queryModel(Model, queryParams, options)
-                    .save(snakelize(filteredData), defaults({ method: 'update', require: false }, options))
+                    .save(snakelize(filteredData), defaults({ method: 'update', require: false }, options));
         })
         .then(serializer(options));
 };
