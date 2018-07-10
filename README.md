@@ -11,6 +11,7 @@ Features
 - (Bookshelf) No default after-update fetch
 - (Bookshelf) Optional Id support (not all models have an id attribute)
 - (Bookshelf) Automatic offset/limit, page/pageSize option parse
+- (Bookshelf) Automatic options-based support for ordering, e.g. `-id` (sort by `id` descending). May be an array of those. Use `+` for ascending.
 
 ## Quickstart
 

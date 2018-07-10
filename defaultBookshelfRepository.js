@@ -1,4 +1,4 @@
-const { defaults, identity, keys, pick, camelCase, pickBy, negate, isArray, isEmpty, forEach } = require('lodash');
+const { defaults, cond, constant, identity, keys, pick, camelCase, pickBy, negate, isArray, isEmpty, forEach } = require('lodash');
 const snakelize = require('./utils/snakelize');
 
 const timestampAdder = (hasTimestamps) => (
@@ -69,12 +69,48 @@ const count = (options = {}, tableName) => {
     };
 };
 
+const order = (queryParams, options = {}) => {
+    // [[orderDir=asc|desc, orderBy=propName]]
+    const orderPairs = order.getOrderPairs(queryParams, options);
+    return qb => {
+        orderPairs.forEach(([orderDir, orderBy]) => {
+            qb.orderBy(orderBy, orderDir);
+        });
+    };
+};
+
+order.getOrderPairs = (queryParams, options = {}) => {
+    return (
+        Array.isArray(options.order)
+            ? options.order
+            : (options.order ? [options.order] : [])
+        )
+            .map(String)
+            .map(
+                cond([
+                    [
+                        token => token.startsWith('-'),
+                        token => ['desc', token.slice(1)],
+                    ],
+                    [
+                        token => token.startsWith('+'),
+                        token => ['asc', token.slice(1)],
+                    ],
+                    [
+                        constant(true),
+                        identity,
+                    ]
+                ])
+            );
+};
+
 const queryModel = (Model, queryParams, options) => {
     return Model
         .query(qb => {
             select(queryParams, options)(qb);
             count(options, Model.forge().tableName)(qb);
             paginate(options)(qb);
+            order(queryParams, options)(qb);
         });
 };
 
