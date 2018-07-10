@@ -72,7 +72,6 @@ const count = (options = {}, tableName) => {
 const order = (queryParams, options = {}) => {
     // [[orderDir=asc|desc, orderBy=propName]]
     const orderPairs = order.getOrderPairs(queryParams, options);
-    console.log(orderPairs)
     return qb => {
         orderPairs.forEach(([orderDir, orderBy]) => {
             qb.orderBy(orderBy, orderDir);
