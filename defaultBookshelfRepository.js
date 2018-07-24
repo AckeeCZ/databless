@@ -34,6 +34,7 @@ const extractPagination = (options = {}, defaultLimit = 10, defaultOffset = 0) =
 
 const select = (queryParams = {}, options = {}) =>
     qb => {
+        let likes = [];
         [queryParams, likes] = select.getWildcards(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
         const primitiveQueryParams = pickBy(queryParams, negate(isArray));
