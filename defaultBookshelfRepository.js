@@ -107,7 +107,7 @@ const order = (queryParams, options = {}) => {
     const orderPairs = order.getOrderPairs(queryParams, options);
     return qb => {
         orderPairs.forEach(([orderDir, orderBy]) => {
-            qb.orderBy(orderBy, orderDir);
+            qb.orderBy(snakelize(orderBy), orderDir);
         });
     };
 };
