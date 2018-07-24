@@ -34,16 +34,49 @@ const extractPagination = (options = {}, defaultLimit = 10, defaultOffset = 0) =
 
 const select = (queryParams = {}, options = {}) =>
     qb => {
+        [queryParams, likes] = select.getWildcards(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
         const primitiveQueryParams = pickBy(queryParams, negate(isArray));
         qb.where(snakelize(primitiveQueryParams));
         forEach(arrayQueryParams, (value, field) => {
             qb.whereIn(snakelize(field), value);
         });
+        likes.forEach(([field, value]) => {
+            qb.where(snakelize(field), 'like', value);
+        });
         if (options.qb) {
             options.qb(qb);
         }
     };
+
+select.getWildcards = (() => {
+    const rgxpLeftWildcard = /^\*/;
+    const rgxpRightWildcard = /\*$/;
+    const hasWildcard = (value) => {
+        value = String(value);
+        return rgxpLeftWildcard.test(value) || rgxpRightWildcard.test(value);
+    };
+    const sqlizeWildcardToken = (value) => {
+        return [
+            rgxpLeftWildcard.test(value) && '%' || '',
+            value
+                .replace(rgxpLeftWildcard, '')
+                .replace(rgxpRightWildcard, ''),
+            rgxpRightWildcard.test(value) && '%' || '',
+        ].join('');
+    };
+    return (queryParams, options = {}) => {
+        let likes = [];
+        queryParams = pickBy(queryParams, (value, property) => {
+            if (hasWildcard(value)) {
+                likes.push([property, sqlizeWildcardToken(value)]);
+                return false;
+            }
+            return true;
+        });
+        return [queryParams, likes];
+    }
+})()
 
 const paginate = (options = {}) => {
     const { limit, offset } = extractPagination(options);
