@@ -3,13 +3,14 @@ const snakelize = require('./utils/snakelize');
 
 const timestampAdder = (hasTimestamps) => (
     hasTimestamps
-        ? data => defaults(
-            {
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-            data
-        )
+        ? data =>
+            defaults(
+                {
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                data
+            )
         : identity
 );
 
@@ -76,8 +77,8 @@ select.getWildcards = (() => {
             return true;
         });
         return [queryParams, likes];
-    }
-})()
+    };
+})();
 
 const paginate = (options = {}) => {
     const { limit, offset } = extractPagination(options);
@@ -118,24 +119,24 @@ order.getOrderPairs = (queryParams, options = {}) => {
         Array.isArray(options.order)
             ? options.order
             : (options.order ? [options.order] : [])
-        )
-            .map(String)
-            .map(
-                cond([
-                    [
-                        token => token.startsWith('-'),
-                        token => ['desc', token.slice(1)],
-                    ],
-                    [
-                        token => token.startsWith('+'),
-                        token => ['asc', token.slice(1)],
-                    ],
-                    [
-                        constant(true),
-                        identity,
-                    ]
-                ])
-            );
+    )
+        .map(String)
+        .map(
+            cond([
+                [
+                    token => token.startsWith('-'),
+                    token => ['desc', token.slice(1)],
+                ],
+                [
+                    token => token.startsWith('+'),
+                    token => ['asc', token.slice(1)],
+                ],
+                [
+                    constant(true),
+                    identity,
+                ]
+            ])
+        );
 };
 
 const queryModel = (Model, queryParams, options) => {
