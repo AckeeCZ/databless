@@ -14,6 +14,13 @@ const timestampAdder = (hasTimestamps) => (
 );
 
 const extractPagination = (options = {}, defaultLimit = 10, defaultOffset = 0) => {
+    if (!options.defaultPagination) {
+        return {
+            limit: isNaN(parseInt(options.limit, 10)) ? undefined : Number(options.limit),
+            offset: isNaN(parseInt(options.offset, 10)) ? undefined : Number(options.offset),
+        };
+    }
+
     if ('fetchAll' in options || 'count' in options) {
         return {
             limit: undefined,
@@ -220,7 +227,7 @@ create.withDetailById = (bookshelf, Model, data, options) =>
         .then(({ id }) => detail(bookshelf, Model, { id: (id || null) }, options));
 
 const destroy = (bookshelf, Model, queryParams, options) => {
-    return queryModel(Model, queryParams, options)
+    return queryModel(Model, queryParams, defaults({ defaultPagination: false }, options))
         .destroy(defaults({ require: false }, options));
 };
 
@@ -237,7 +244,7 @@ const update = (bookshelf, Model, queryParams, updateData, options) => {
 
             return isEmpty(filteredData)
                 ? Promise.resolve(null)
-                : queryModel(Model, queryParams, options)
+                : queryModel(Model, queryParams, defaults({ defaultPagination: false }, options))
                     .save(snakelize(filteredData), defaults({ method: 'update', require: false }, options));
         })
         .then(serializer(options));
