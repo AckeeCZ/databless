@@ -15,17 +15,16 @@ const timestampAdder = (hasTimestamps) => (
 );
 
 const extractPagination = (options = {}, defaultLimit = 10, defaultOffset = 0) => {
-    if (!options.defaultPagination) {
-        return {
-            limit: isNaN(parseInt(options.limit, 10)) ? undefined : Number(options.limit),
-            offset: isNaN(parseInt(options.offset, 10)) ? undefined : Number(options.offset),
-        };
-    }
-
     if ('fetchAll' in options || 'count' in options) {
         return {
             limit: undefined,
             offset: undefined,
+        };
+    }
+    if (!options.defaultPagination) {
+        return {
+            limit: isNaN(parseInt(options.limit, 10)) ? undefined : Number(options.limit),
+            offset: isNaN(parseInt(options.offset, 10)) ? undefined : Number(options.offset),
         };
     }
     if (('limit' in options) || ('offset' in options)) {
