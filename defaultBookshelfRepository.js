@@ -213,7 +213,18 @@ const bulkCreate = (bookshelf, Model, bulkData = [], options = {}) => {
 const create = (bookshelf, Model, data = {}, options = {}) => {
     return getModelFields(bookshelf, Model)
         .then(fields =>
-            Model.forge().save(pick(data, fields), options)
+            Model.forge().save(pick(data, fields), options).then(result => {
+                const possibleRelations = omit(data, fields);
+                const relationJobs = [];
+                for (let key in possibleRelations) {
+                    if (isArray(possibleRelations[key]) && result.related(key)){
+                        relationJobs.push(
+                            result.related(key).attach(possibleRelations[key])
+                        );
+                    }
+                }
+                return Promise.all(relationJobs).then(() => result);
+            })
         )
         .then(serializer(options));
 };
