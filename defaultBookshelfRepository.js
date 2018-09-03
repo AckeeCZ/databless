@@ -210,10 +210,30 @@ const bulkCreate = (bookshelf, Model, bulkData = [], options = {}) => {
     );
 };
 
+/**
+ * Tries to attach simple relations to bookshelf entity
+ * 
+ * @param {*} result Bookshelf entity
+ * @param {*} possibleRelations Object where keys are names of relations and values are IDs to be attached
+ * @param {*} options Options passed to bookshelf
+ */
+const attachSimpleRelations = (result, possibleRelations, options = {}) => {
+    return Promise.all(
+        map(
+            possibleRelations,
+            (val, key) =>
+                isArray(val) && result.related(key) ? result.related(key).attach(val, options) : Promise.resolve(null)
+        )
+    )
+    .then(() => result);
+};
+
 const create = (bookshelf, Model, data = {}, options = {}) => {
     return getModelFields(bookshelf, Model)
         .then(fields =>
-            Model.forge().save(pick(data, fields), options)
+            Model.forge()
+                .save(pick(data, fields), options)
+                .then(result => attachSimpleRelations(result, omit(data, fields), options))
         )
         .then(serializer(options));
 };
