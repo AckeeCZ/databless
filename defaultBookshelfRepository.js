@@ -1,4 +1,9 @@
-const { defaults, cond, constant, identity, keys, pick, camelCase, pickBy, negate, isArray, isEmpty, forEach } = require('lodash');
+const {
+    camelCase, cond, constant,
+    defaults, forEach, isArray, isEmpty,
+    identity, keys, map, negate,
+    omit, pick, pickBy,
+} = require('lodash');
 const snakelize = require('./utils/snakelize');
 
 const timestampAdder = (hasTimestamps) => (
@@ -225,7 +230,7 @@ const attachSimpleRelations = (result, possibleRelations, options = {}) => {
                 isArray(val) && result.related(key) ? result.related(key).attach(val, options) : Promise.resolve(null)
         )
     )
-    .then(() => result);
+        .then(() => result);
 };
 
 const create = (bookshelf, Model, data = {}, options = {}) => {
