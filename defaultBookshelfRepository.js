@@ -222,9 +222,10 @@ const attachSimpleRelations = (result, possibleRelations, options = {}) => {
         map(
             possibleRelations,
             (val, key) =>
-                isArray(val) && result.related(key) ? result.related(key).attach(val) : Promise.resolve(null)
+                isArray(val) && result.related(key) ? result.related(key).attach(val, options) : Promise.resolve(null)
         )
-    ).then(() => result);
+    )
+    .then(() => result);
 };
 
 const create = (bookshelf, Model, data = {}, options = {}) => {
