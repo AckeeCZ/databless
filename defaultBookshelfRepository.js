@@ -144,7 +144,7 @@ order.getOrderPairs = (queryParams, options = {}) => {
                 ],
                 [
                     constant(true),
-                    identity,
+                    token => ['asc', token],
                 ]
             ])
         );
