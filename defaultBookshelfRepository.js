@@ -227,7 +227,7 @@ const attachSimpleRelations = (result, possibleRelations, options = {}) => {
         map(
             possibleRelations,
             (val, key) =>
-                isArray(val) && result.related(key) ? result.related(key).attach(val, options) : Promise.resolve(null)
+                isArray(val) && val.every(Number.isInteger) && result.related(key) && result.related(key).relatedData.type === 'belongsToMany' ? result.related(key).attach(val, options) : Promise.resolve(null)
         )
     )
         .then(() => result);
