@@ -11,13 +11,11 @@ module.exports = function(Bookshelf) {
   .then(function() {
     return knex.schema.createTable('users', function(table) {
       table.increments('id');
-      table.integer('site_id');
       table.text('name');
     })
     .createTable('posts', function(table) {
       table.increments('id');
       table.integer('user_id');
-      table.integer('blog_id');
       table.string('name');
       table.text('content');
     })

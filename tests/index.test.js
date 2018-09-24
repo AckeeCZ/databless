@@ -1,4 +1,4 @@
-const { initBookshelf, initKnex, getKnex, defaultBookshelfRepository, getBookshelf } = require('..');
+const { initBookshelf, initKnex, defaultBookshelfRepository, getBookshelf } = require('..');
 
 const init = () => {
     initBookshelf(
@@ -12,10 +12,10 @@ test('Can init rdbgw', () => {
     expect(bookshelf).toBeDefined();
 });
 
+init();
+const { User } = require('./helpers/models')(getBookshelf());
+
 test('Can create model', () => {
-    const User = getBookshelf().Model.extend({
-        tableName: 'user',
-    });
     const users = defaultBookshelfRepository.bind(getBookshelf(), User);
     expect(users).toBeDefined();
 });
