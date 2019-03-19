@@ -2,7 +2,11 @@
   "name": "@ackee/databless",
   "version": "1.0.8",
   "description": "A work-in-progress set of yet-bookshelf-only DB helpers and a generic repository.",
-  "keywords": ["database", "orm", "rdgw"],
+  "keywords": [
+    "database",
+    "orm",
+    "rdgw"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
