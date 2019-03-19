@@ -1,13 +1,17 @@
 {
-  "name": "ackee-node-rdbgw",
+  "name": "@ackee/databless",
   "version": "1.0.8",
-  "description": "",
+  "description": "A work-in-progress set of yet-bookshelf-only DB helpers and a generic repository.",
+  "keywords": ["database", "orm", "rdgw"],
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
     "test-watch": "jest --coverage --watch"
   },
   "author": "Jiri Smolik <jiri.smolik@ackee.cz>",
+  "contributors": [
+    "Michal Vlasák <michal.vlasak@ackee.cz>"
+  ],
   "license": "ISC",
   "dependencies": {
     "bookshelf": "^0.13.3",
