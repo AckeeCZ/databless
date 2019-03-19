@@ -1,10 +1,14 @@
-# rdbgw
+# databless
+
+<div align="center">
+[![Build Status](https://travis-ci.org/AckeeCZ/databless.svg?branch=master)](https://travis-ci.org/AckeeCZ/databless)
+</div>
 
 > Relational database gateway
 
 Providing means of communications with relational database.
 
-Based on our `defaultRepository` module.
+Based on Ackee's former rdgw `defaultRepository` module.
 
 Features
 - (Bookshelf) automatic column cache and attributes stripping on first model use
