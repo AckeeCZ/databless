@@ -1,0 +1,18 @@
+language: node_js
+node_js:
+- '8'
+- '9'
+- '10'
+script:
+- npm run lint
+- npm run build
+- npm run test
+deploy:
+  provider: npm
+  skip-cleanup: true
+  email: ackeedevelopment@gmail.com
+  api_key:
+    secure: Zc6oOp5v1S686tB3nhyIFS1f7L780cJOhIr95oh64hNOICQbsS5alaYQn259mdMZLcyeim0u3/ZnoaQ02CCk3Pa7u8gxP2wy1d5MlflazfOsIq5MlINRfSlV939S0LUonqrRaK3KN3RoR/8xns2ygls999bnafXig9M6NJRaZZYNJ/l9md0D/eMjZQvPEUEXc28nZzBfiipycXay4YSqdsklPiqwvzMxbyu2Q/bbxgGSeUMAXBQP9Nc8fu762oMpMmlAHdFzbcdwJTZSQKq8XI5h5/NNy66eB22DjGQVtK7qh1Kght7mg9mO+u5DP0njuHnuaLBxEVXnM06s6kb2qHgB+4Pketeq3AO1cLMGECMvuDvMOPe+zs+QnfU8QwI5tz9kx0X+ayeTIwS0+aBEByuKFN4vO64SMN8KQv+maHnl5kZyJxqFL6o69RJb4VQMbIDW0xrt4ui0Y+nRbSYAaiW6n41TDCHFLJa/mO3r6d67O2tqGT2Y5XsztSVV90KycwZ2kF3ZZ4yCSBJQlqcbnYWv21VB9oesrCsMZTzJLsNXx4m6v/WiNPnVKrf6GDMpsaJlqKzHAOeo8F8PYPw6nsqj7bk+af3C9J7d6bJnKWTTuxze42FofV01wMCCKt0YkmueMwShQASghYUGl7sFZkTBS8mMKtfSYgNDC9fj4Co=
+  on:
+    tags: true
+    repo: AckeeCZ/databless
