@@ -179,9 +179,11 @@ const getModelFields = (() => {
     return (bookshelf, Model) => {
         const tableName = Model.forge().tableName;
         if (!colsCache.has(tableName)) {
-            return bookshelf.knex(tableName).columnInfo()
+            return bookshelf
+                .knex(tableName)
+                .columnInfo()
                 .then(info => {
-                    colsCache.set(tableName, keys(info).map(camelCase));
+                    colsCache.set(tableName, keys(info).map(bookshelf.__rdbGwCamelCase ? camelCase : identity));
                     return colsCache.get(tableName);
                 });
         }
