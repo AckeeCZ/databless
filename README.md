@@ -1,10 +1,13 @@
-# databless
+
 
 <div align="center">
 
 [![Build Status](https://travis-ci.org/AckeeCZ/databless.svg?branch=master)](https://travis-ci.org/AckeeCZ/databless)
 
+<img src="./resources/logo.png" height="170"/>
 </div>
+
+# Databless
 
 > Relational database gateway
 
