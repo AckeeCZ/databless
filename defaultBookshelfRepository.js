@@ -321,4 +321,5 @@ module.exports = {
     updateById,
     // --
     bind,
+    select,
 };
