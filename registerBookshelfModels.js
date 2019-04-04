@@ -7,7 +7,7 @@ module.exports = (bookshelf, input) => {
         const lstStat = fs.lstatSync(input);
         if (lstStat.isDirectory()) {
             return fs.readdirSync(input)
-                .filter(x => x.endsWith('.js'))
+                .filter(x => x.endsWith('.js') || x.endsWith('.ts'))
                 .forEach(modelModuleName => {
                     const bootstrapModel = require(path.join(input, modelModuleName));
                     (bootstrapModel.default || bootstrapModel)(bookshelf);
