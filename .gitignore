@@ -99,3 +99,5 @@ public/bower_components
 
 # VS Code
 .vscode/
+
+package-lock.json
