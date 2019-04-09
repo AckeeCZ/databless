@@ -306,6 +306,7 @@ const bind = (bookshelf, Model) => {
         detailById: (id, options) => detailById(bookshelf, Model, id, options),
         update: (queryParams, data, options) => update(bookshelf, Model, queryParams, data, options),
         updateById: boundUpdateById,
+        getModelFields: () => getModelFields(bookshelf, Model),
     };
 };
 
@@ -322,4 +323,5 @@ module.exports = {
     // --
     bind,
     select,
+    getModelFields,
 };
