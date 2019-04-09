@@ -1,6 +1,6 @@
 {
   "name": "@ackee/databless",
-  "version": "1.0.14",
+  "version": "1.1.0",
   "description": "A work-in-progress set of yet-bookshelf-only DB helpers and a generic repository.",
   "keywords": [
     "database",
@@ -23,7 +23,9 @@
     "node": ">=8.11.3"
   },
   "jest": {
-    "setupFilesAfterEnv": ["jest-extended"]
+    "setupFilesAfterEnv": [
+      "jest-extended"
+    ]
   },
   "license": "ISC",
   "dependencies": {
