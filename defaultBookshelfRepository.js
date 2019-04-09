@@ -103,14 +103,15 @@ const paginate = (options = {}) => {
     };
 };
 
-const count = (options = {}, tableName) => {
-    if (!tableName) {
-        throw new Error('Missing table name for count!');
+const count = (options = {}, model) => {
+    if (!model) {
+        throw new Error('Missing model for count!');
     }
+    const { tableName, idAttribute } = model.forge();
 
     return qb => {
         if (options.count) {
-            qb.countDistinct(`${tableName}.id AS total`);
+            qb.countDistinct(`${tableName}.${idAttribute} AS total`);
         }
     };
 };
@@ -154,7 +155,7 @@ const queryModel = (Model, queryParams, options) => {
     return Model
         .query(qb => {
             select(queryParams, options)(qb);
-            count(options, Model.forge().tableName)(qb);
+            count(options, Model)(qb);
             paginate(options)(qb);
             order(queryParams, options)(qb);
         });
