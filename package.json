@@ -14,8 +14,13 @@
   },
   "author": "Jiri Smolik <jiri.smolik@ackee.cz>",
   "contributors": [
-    "Michal Vlasák <michal.vlasak@ackee.cz>"
+    "Michal Vlasák <michal.vlasak@ackee.cz>",
+    "Jaroslav Šmolík <grissius@gmail.com>"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AckeeCZ/databless"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -30,10 +35,11 @@
   "license": "ISC",
   "dependencies": {
     "bookshelf": "^0.13.3",
-    "knex": "^0.14.6",
-    "mysql": "^2.15.0",
     "bookshelf-camelcase": "2.0.1",
-    "bookshelf-paranoia": "^0.11.0"
+    "bookshelf-paranoia": "^0.11.0",
+    "desmond": "^0.5.6",
+    "knex": "^0.14.6",
+    "mysql": "^2.15.0"
   },
   "devDependencies": {
     "jest": "^24.5.0",
