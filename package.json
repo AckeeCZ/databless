@@ -14,8 +14,13 @@
   },
   "author": "Jiri Smolik <jiri.smolik@ackee.cz>",
   "contributors": [
-    "Michal Vlasák <michal.vlasak@ackee.cz>"
+    "Michal Vlasák <michal.vlasak@ackee.cz>",
+    "Jaroslav Šmolík <grissius@gmail.com>"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AckeeCZ/databless"
+  },
   "publishConfig": {
     "access": "public"
   },
