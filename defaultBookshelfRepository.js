@@ -4,7 +4,7 @@ const {
     identity, keys, map, negate,
     omit, pick, pickBy,
 } = require('lodash');
-const snakelize = require('./utils/snakelize');
+const { snakelize } = require('desmond');
 
 const timestampAdder = (hasTimestamps) => (
     hasTimestamps
