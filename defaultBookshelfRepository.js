@@ -207,7 +207,10 @@ const list = (bookshelf, Model, queryParams, options) => {
 const listCursor = (bookshelf, Model, queryParams, options) => {
     return queryCollection(Model, queryParams, options)
         .fetchCursorPage(options)
-        .then(serializer(options));
+        .then(result => ({
+            ...result,
+            data: result.toJSON(options.toJSON),
+        }));
 };
 
 const detail = (bookshelf, Model, queryParams, options) => {
