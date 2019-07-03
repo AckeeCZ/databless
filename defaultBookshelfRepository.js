@@ -104,15 +104,14 @@ const paginate = (options = {}) => {
 };
 
 const count = (options = {}, model) => {
-    if (!model) {
+    if (!options.count) return qb => qb;
+    if (!model || !model.forge) {
         throw new Error('Missing model for count!');
     }
     const { tableName, idAttribute } = model.forge();
 
     return qb => {
-        if (options.count) {
-            qb.countDistinct(`${tableName}.${idAttribute} AS total`);
-        }
+        qb.countDistinct(`${tableName}.${idAttribute} AS total`);
     };
 };
 
@@ -151,15 +150,19 @@ order.getOrderPairs = (queryParams, options = {}) => {
         );
 };
 
-const queryModel = (Model, queryParams, options) => {
-    return Model
+const query = (source, queryParams, options) => {
+    return source
         .query(qb => {
             select(queryParams, options)(qb);
-            count(options, Model)(qb);
+            count(options, source)(qb);
             paginate(options)(qb);
             order(queryParams, options)(qb);
         });
-};
+}
+
+const queryModel = query;
+
+const queryCollection = (Model, queryParams, options) => query(Model.collection(), queryParams, options);
 
 const serializer = (options = {}) =>
     (result) => {
@@ -199,6 +202,15 @@ const list = (bookshelf, Model, queryParams, options) => {
     return queryModel(Model, queryParams, options)
         .fetchAll(options)
         .then(serializer(options));
+};
+
+const listCursor = (bookshelf, Model, queryParams, options) => {
+    return queryCollection(Model, queryParams, options)
+        .fetchCursorPage(options)
+        .then(result => ({
+            ...result,
+            data: result.toJSON(options.toJSON),
+        }));
 };
 
 const detail = (bookshelf, Model, queryParams, options) => {
@@ -303,6 +315,7 @@ const bind = (bookshelf, Model) => {
         deleteById: (id, options) => destroyById(bookshelf, Model, id, options),
         destroyById: (id, options) => destroyById(bookshelf, Model, id, options),
         list: (queryParams, options) => list(bookshelf, Model, queryParams, options),
+        listCursor: bookshelf.__rdbgwCursorPagination ? (queryParams, options) => listCursor(bookshelf, Model, queryParams, options) : undefined,
         detail: (queryParams, options) => detail(bookshelf, Model, queryParams, options),
         detailById: (id, options) => detailById(bookshelf, Model, id, options),
         update: (queryParams, data, options) => update(bookshelf, Model, queryParams, data, options),
@@ -317,6 +330,7 @@ module.exports = {
     delete: destroy,
     deleteById: destroyById,
     list,
+    listCursor,
     detail,
     detailById,
     update,
