@@ -5,10 +5,10 @@ module.exports = (knex, plugins = ['registry', 'bookshelf-camelcase', 'visibilit
     const bookshelf = require('bookshelf')(knex); // eslint-disable-line global-require
     bookshelf.__rdbGwKey = knex.__rdbGwKey;
     bookshelf.__rdbGwCamelCase = plugins.includes('bookshelf-camelcase');
-    bookshelf.__rdbgwCursorPagination = plugins.includes('bookshelf-cursor-pagination');
     plugins.forEach(plugin => {
         bookshelf.plugin(plugin);
     });
+    bookshelf.__rdbgwCursorPagination = typeof bookshelf.Collection.prototype.fetchCursorPage === 'function';
     instances.set(bookshelf.__rdbGwKey, bookshelf);
     return bookshelf;
 };
