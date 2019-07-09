@@ -209,7 +209,7 @@ const listCursor = (bookshelf, Model, queryParams, options) => {
         .fetchCursorPage(options)
         .then(result => ({
             ...result,
-            next: () => listCursor(bookshelf, Model, queryParams, { ...options, after: result.pagination.cursors.after }),
+            next: () => listCursor(bookshelf, Model, queryParams, { ...options, after: result.pagination.cursors.after, offset: undefined }),
             data: result.toJSON(options.toJSON)
         }));
 };
