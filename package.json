@@ -34,13 +34,13 @@
   },
   "license": "ISC",
   "dependencies": {
-    "bookshelf": "^0.13.3",
+    "bookshelf": "^1.1.0",
     "bookshelf-camelcase": "2.0.1",
     "bookshelf-cursor-pagination": "^1.4.2",
     "bookshelf-paranoia": "^0.11.0",
     "desmond": "^0.5.6",
-    "knex": "^0.14.6",
-    "mysql": "^2.15.0"
+    "knex": "^0.20.8",
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
     "jest": "^24.5.0",

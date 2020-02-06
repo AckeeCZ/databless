@@ -1,7 +1,7 @@
 const instances = new Map();
 const cursorPlugin = require('bookshelf-cursor-pagination').default;
 
-module.exports = (knex, plugins = ['registry', 'bookshelf-camelcase', 'visibility', 'pagination', 'bookshelf-paranoia', cursorPlugin]) => {
+module.exports = (knex, plugins = ['bookshelf-camelcase', 'bookshelf-paranoia', cursorPlugin]) => {
     const bookshelf = require('bookshelf')(knex); // eslint-disable-line global-require
     bookshelf.__rdbGwKey = knex.__rdbGwKey;
     bookshelf.__rdbGwCamelCase = plugins.includes('bookshelf-camelcase');
