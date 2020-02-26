@@ -1,6 +1,6 @@
 {
   "name": "@ackee/databless",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "A work-in-progress set of yet-bookshelf-only DB helpers and a generic repository.",
   "keywords": [
     "database",
