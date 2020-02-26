@@ -3,6 +3,7 @@
 <div align="center">
 
 [![Build Status](https://travis-ci.org/AckeeCZ/databless.svg?branch=master)](https://travis-ci.org/AckeeCZ/databless)
+[![Known Vulnerabilities](https://snyk.io/test/github/AckeeCZ/databless/badge.svg)](https://snyk.io/test/AckeeCZ/databless)
 
 <img src="./resources/logo.png" height="170"/>
 </div>
