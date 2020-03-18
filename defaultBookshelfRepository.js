@@ -207,11 +207,15 @@ const list = (bookshelf, Model, queryParams, options) => {
 const listCursor = (bookshelf, Model, queryParams, options) => {
     return queryCollection(Model, queryParams, options)
         .fetchCursorPage(options)
-        .then(result => ({
-            ...result,
-            next: () => listCursor(bookshelf, Model, queryParams, { ...options, after: result.pagination.cursors.after, offset: undefined }),
-            data: result.toJSON(options.toJSON)
-        }));
+        .then(result => {
+            const { before, after } = result.pagination.cursors;
+            return {
+                ...result,
+                prev: () => listCursor(bookshelf, Model, queryParams, { ...options, offset: undefined, before }),
+                next: () => listCursor(bookshelf, Model, queryParams, { ...options, offset: undefined, after }),
+                data: result.toJSON(options.toJSON)
+            };
+        });
 };
 
 const detail = (bookshelf, Model, queryParams, options) => {
