@@ -150,11 +150,11 @@ order.getOrderPairs = (queryParams, options = {}) => {
         );
 };
 
-const query = (source, queryParams, options) => {
+const query = (source, queryParams, options, Model = source) => {
     return source
         .query(qb => {
             select(queryParams, options)(qb);
-            count(options, source)(qb);
+            count(options, Model)(qb);
             paginate(options)(qb);
             order(queryParams, options)(qb);
         });
@@ -162,7 +162,7 @@ const query = (source, queryParams, options) => {
 
 const queryModel = query;
 
-const queryCollection = (Model, queryParams, options) => query(Model.collection(), queryParams, options);
+const queryCollection = (Model, queryParams, options) => query(Model.collection(), queryParams, options, Model);
 
 const serializer = (options = {}) =>
     (result) => {
@@ -237,7 +237,7 @@ const bulkCreate = (bookshelf, Model, bulkData = [], options = {}) => {
 
 /**
  * Tries to attach simple relations to bookshelf entity
- * 
+ *
  * @param {*} result Bookshelf entity
  * @param {*} possibleRelations Object where keys are names of relations and values are IDs to be attached
  * @param {*} options Options passed to bookshelf
