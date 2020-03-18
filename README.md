@@ -1,130 +1,68 @@
-
-
 <div align="center">
 
-[![Build Status](https://travis-ci.org/AckeeCZ/databless.svg?branch=master)](https://travis-ci.org/AckeeCZ/databless)
-[![Known Vulnerabilities](https://snyk.io/test/github/AckeeCZ/databless/badge.svg)](https://snyk.io/test/AckeeCZ/databless)
-
-<img src="./resources/logo.png" height="170"/>
-</div>
 
 # Databless
+[![Build Status](https://img.shields.io/travis/com/AckeeCZ/databless/master.svg?style=flat-square)](https://travis-ci.com/AckeeCZ/databless)
+[![Coverage](https://img.shields.io/codeclimate/coverage/AckeeCZ/databless.svg?style=flat-square)](https://codeclimate.com/github/AckeeCZ/databless)
+[![Maintainability](https://img.shields.io/codeclimate/maintainability/AckeeCZ/databless.svg?style=flat-square)](https://codeclimate.com/github/AckeeCZ/databless)
+[![Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/github/AckeeCZ/databless.svg?style=flat-square)](https://snyk.io/test/github/AckeeCZ/databless?targetFile=package.json)
+[![Dependency Status](https://img.shields.io/david/AckeeCZ/databless.svg?style=flat-square)](https://david-dm.org/AckeeCZ/databless)
+[![Dev Dependency Status](https://img.shields.io/david/dev/AckeeCZ/databless.svg?style=flat-square)](https://david-dm.org/AckeeCZ/databless?type=dev)
 
-> Relational database gateway
+<img src="./resources/logo.png" height="170"/>
 
-Providing means of communications with relational database.
+</div>
 
-Based on Ackee's former rdgw `defaultRepository` module.
+## Local setup
 
-Features
-- (Bookshelf) automatic column cache and attributes stripping on first model use
-- (Bookshelf) No default after-update fetch
-- (Bookshelf) Optional Id support (not all models have an id attribute)
-- (Bookshelf) Automatic offset/limit, page/pageSize option parse
-- (Bookshelf) Automatic options-based support for ordering, e.g. `-id` (sort by `id` descending). May be an array of those. Use `+` for ascending.
+TODO
 
-## Quickstart
+## Remote services
 
-### Knex/Bookshelf
-```javascript
+### npm
 
-const {
-    // Initializes knex with given options and stores the instance
-    // under given key. No key means default instance.
-    initKnex,
-    // Initializes bookshelf with given options and stores the instance
-    // under given key. No key means default instance.
-    initBookshelf,
-    // To register bookshelf models from a directory
-    registerBookshelfModels,
-    // Gets an knex instance by given key. No key means the default instance.
-    getKnex
-    // Gets a bookshelf instance by given key. No key means the default instance.
-    getBookshelf
-} = require('rdbgw');
-
-const register = (...args) =>
-    registerBookshelfModels(
-        initBookshelf(
-            initKnex(config.bookshelf.knex.init)
-        ),
-    ...args)
-
-// Read all the models to the bookshelf registry
-// All model modules are expected to be a fn (bookshelf): Model
-register(`${__dirname}/app/models`);
-
+```yaml
+deploy:
+  provider: npm
+  # TODO
+  email: ackeedevelopment@gmail.com
+  skip_cleanup: true
+  # TODO
+  api_key:
+    secure: G8gmvUC5aRLRicRx...=
+  on:
+    tags: true
+    repo: AckeeCZ/configuru
 ```
 
-```javascript
-const {
-    // General repository
-    defaultBookshelfRepository,
-    getBookshelf,
-} = require('rdbgw');
+To generate npm api key:
+1. Visit [tokens](https://www.npmjs.com/settings/ackeecz/tokens) and create new one with publish permissions
+2. `travis login --com`
+3. `travis encrypt --com TOKEN`
 
-const Availability = getBookshelf().model('Availability');
+### Travis
+- Check `.travis.yml` (see `node_js` for versions of node, and `script` for the task definition)
+- Log in to [Travis](https://travis-ci.com)
+- Add the project (wait for permission asking as member of organization)
+- Update `script`, `deploy` (add npm, remove GH pages or update API key etc.)
 
-const availabilities = (({ detail, create, updateById, deleteById, bulkCreate, list }) => (
-    {
-        list,
-        bulkCreate,
-        detail,
-        create,
-        updateById,
-        deleteById,
-    }
-))(defaultBookshelfRepository.bind(getBookshelf(), Availability));
-
-availabilities.create({ from: new Date() });
-
-availabilities.list({});
-
-availabilities.list({}, { qb: (qb) => qb});
-
-/*
-defaultBookshelfRepository's API
-
-bulkCreate: (bookshelf, Model, data, options): Promise
-
-create: (bookshelf, Model, data, options): Promise
-
-delete: (bookshelf, Model, query, options): Promise
-
-deleteById: (bookshelf, Model, id, options):
-    delete(bookshelf, Model, { id }, options)
-
-list: (bookshelf, Model, query, options): Promise
-
-detail: (bookshelf, Model, query, options):
-    list(bookshelf, Model, query, { ...options, limit: 1, offset: 0 })
-
-detailById: (bookshelf, Model, id, options):
-    detail(bookshelf, Model, { id }, options)
-
-update: (bookshelf, Model, query, data, options): Promise
-
-updateById: (bookshelf, Model, query, data, options):
-    update(bookshelf, Model, { id }, data, options)
-
---
-bind: (bookshelf, Model) returns an object with API of above with bound bookshelf instance and Model.
-
---
-.withDetail* helpers - Returns a function of given call, successful call triggers a detail call with given query, returning this result instead.
-
-create.withDetailBy(query) 
-create.withDetailById(id)
-update.withDetailBy(query)
-update.withDetailById(id)
-*/
-
-```
+### Codeclimate
+- Log in to [CodeClimate](https://codeclimate.com/oss/dashboard)
+- Add the project
+- Setup travis `CC_TEST_REPORTER_ID` env
+- Setup coverage in `.travis.yml` (will only update in `master` branch with default config)
 
 
-#### Helpers
+### Snyk
+Badge works out of the box, just update links. However, you can register the project:
 
-- `composeQb` - `composeQb(options, qb => ...)` automatic wrap for composing multiple querybuilders in different layers of the application. Prevents qb option overwriting.
+- Log in to [Snyk](https://app.snyk.io)
+- Add project
+- Update badge source and link
 
+### David
+- No need to integrate, just update links
 
+## License
 
+This project is licensed under [MIT](./LICENSE).
