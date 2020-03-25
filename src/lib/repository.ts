@@ -8,13 +8,13 @@ type PrimitiveToType<P> = P extends 'string' ? string : P extends 'date' ? Date 
 type AttributeRelation2Type<P> = P extends AttributeRelation<infer M> ? CreateEntity<M['options']['attributes']> : never;
 type Attribute2Type<P> = P extends AttributeRelation<infer M> ? AttributeRelation2Type<M> : P extends { deserialize: (x: any) => infer R } ? R : P extends { type: infer X } ? PrimitiveToType<X> : never;
 type Attribute = AttributeRelation | { type: Primitive | 'relation', serialize?: (x: any) => PrimitiveToType<Primitive>, deserialize?: (x: any) => any };
-export type AttributeRelation<M extends Model = any> = {
+export type AttributeRelation<M extends Model<any> = any> = {
     type: 'relation',
     targetModel: () => M,
     relation: bookshelfUtil.BookshelfRelation,
 }
 export type CreateEntity<A extends Record<string, Attribute>> = { [key in keyof A]: A[key] extends Attribute ? Attribute2Type<A[key]> : never };
-export type Model2Entity<M extends Model> = CreateEntity<M['options']['attributes']>;
+export type Model2Entity<M extends Model<any>> = CreateEntity<M['options']['attributes']>;
 
 export interface ModelOptions {
     adapter: Knex
@@ -22,7 +22,7 @@ export interface ModelOptions {
     attributes: Record<string, Attribute>
 }
 
-interface Model<O extends ModelOptions> {
+export interface Model<O extends ModelOptions> {
     bookshelfModel: any
     attributeNames: string[]
     options: O
