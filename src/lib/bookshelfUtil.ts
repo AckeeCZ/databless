@@ -57,7 +57,7 @@ const serializer = (options = {} as any) =>
             return result;
         }
         if (options.count) {
-            return result && result.head().get('total') || 0;
+            return result && result.toJSON()[0].total || 0;
         }
         if (result && result.toJSON) {
             return result.toJSON(options.toJSON);
@@ -102,11 +102,19 @@ const select = (queryParams: any = {}, options: any = {}) => {
         }
     };
 };
+const count = (options: any = {}, model: ReturnType<typeof createModel>) => {
+    if (!options.count) return (qb: QueryBuilder) => qb;
+    const { tableName, idAttribute } = (model as any /* TODO Type */).forge();
+
+    return (qb: QueryBuilder) => {
+        qb.countDistinct(`${tableName}.${idAttribute} AS total`);
+    };
+};
 const queryModel = (source: ReturnType<typeof createModel>, queryParams?: any, options?: any) => {
     return source
         .query((qb: QueryBuilder) => {
             select(queryParams, options)(qb);
-            // count(options, source)(qb);
+            count(options, source)(qb);
             // paginate(options)(qb);
             // order(queryParams, options)(qb);
         });
