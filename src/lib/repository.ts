@@ -36,11 +36,13 @@ export const create = async <T extends ModelOptions>(model: Model<T>, data: any 
     return bookshelfUtil.serializer(options)(result);
 };
 
-export const list = async <T extends ModelOptions>(model: Model<T>, filter?: any, options?: any) => {
-    const result = await bookshelfUtil.queryModel(model.bookshelfModel, filter, options);
+export const list = async <T extends ModelOptions>(model: Model<T>, filter?: any, options?: any): Promise<any[]> /* TODO Type */ => {
+    const result = await bookshelfUtil.queryModel(model.bookshelfModel, filter, options)
+        .fetchAll();
     return bookshelfUtil.serializer(options)(result);
-}
+};
 
+// TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
 export const detail = async <T extends ModelOptions>(model: Model<T>, filter?: any, options?: any) => {
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.bookshelfModel, filter, options)
