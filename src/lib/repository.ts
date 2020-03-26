@@ -19,11 +19,11 @@ export type AttributeRelation2Type<P, S = never> = P extends { type: 'relation' 
 type Attribute2Type<P, S = never> = P extends AttributeRelation ? AttributeRelation2Type<P, S> : P extends { deserialize: (x: any) => infer R } ? R : P extends { type: infer X } ? PrimitiveToType<X> : never;
 type PrimitiveAttribute = { type: Primitive, serialize?: (x: any) => PrimitiveToType<Primitive>, deserialize?: (x: any) => any };
 type Attribute = AttributeRelation | PrimitiveAttribute;
-
-export type AttributeRelation<A extends Record<string, PrimitiveAttribute> = Record<string, PrimitiveAttribute>> = {
-    type: 'relation',
-    targetModel: (() => Model<A>) | 'self',
-    relation: bookshelfUtil.BookshelfRelation,
+export type Relation = { collection: true } | { collection: false }
+export type AttributeRelation<A extends Record<string, PrimitiveAttribute> = Record<string, PrimitiveAttribute>, R extends Relation = any> = {
+    type: 'relation'
+    targetModel: (() => Model<A>) | 'self'
+    relation: R
 }
 export type Attributes2Entity<A extends Record<string, Attribute>> = { [key in keyof A]: A[key] extends Attribute ? Attribute2Type<A[key], A> : never };
 export type Model2Entity<M extends Model<any>> = Attributes2Entity<M['options']['attributes']>;

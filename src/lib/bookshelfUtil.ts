@@ -1,37 +1,54 @@
 import Bookshelf, { Model } from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
 import { forEach, isArray, isObject, isString, negate, pickBy, snakeCase } from 'lodash';
-import { ModelOptions, AttributeRelation } from './repository';
+import { ModelOptions, AttributeRelation, Relation } from './repository';
 
 export interface BookshelfRelationHasOne {
+    // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
     /** Foreign key in the Target model. By default the foreign key is assumed to be the singular form of this model's tableName followed by _id / _{{idAttribute}}. */
     foreignKey?: string
     /** Column in this model's table which foreignKey references, if other than this model's id / idAttribute. */
     foreignKeyTarget?: string
 }
 
-export interface BookshelfRelation {
+export interface BookshelfRelationHasMany {
+    // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
+    /** ForeignKey in the Target model. By default, the foreign key is assumed to be the singular form of this model's tableName, followed by _id / _{{idAttribute}}. */
+    foreignKey?: string
+    /** Column in this model's table which foreignKey references, if other than this model's id / idAttribute. */
+    foreignKeyTarget?: string
+}
+
+export type BookshelfRelation = Relation & {
     isRelation: true;
     hasOne?: BookshelfRelationHasOne;
+    hasMany?: BookshelfRelationHasMany;
 }
 
 const bookshelfRelation = {
     createHasOne: (opts: BookshelfRelationHasOne = {}): BookshelfRelation => ({
+        collection: false,
         isRelation: true,
         hasOne: opts,
+    }),
+    createHasMany: (opts: BookshelfRelationHasMany = {}): BookshelfRelation => ({
+        collection: false,
+        isRelation: true,
+        hasMany: opts,
     }),
 };
 
 const createModel = (options: ModelOptions) => {
     const knex: Knex = options.adapter();
     const bookshelf: Bookshelf = require('bookshelf')(knex);
+    const x: AttributeRelation<any, BookshelfRelation>;
     let model: Bookshelf.Model<any>;
     const modelOptions: Bookshelf.ModelOptions = Object.keys(options.attributes)
         .map(key => ({
             name: key,
             value: options.attributes[key],
         }))
-        .filter((x): x is { name: string, value: AttributeRelation } => x.value.type === 'relation')
+        .filter((x): x is { name: string, value: AttributeRelation<any, BookshelfRelation> } => x.value.type === 'relation')
         .reduce((acc, attribute) => {
             if (attribute.value.relation.hasOne) {
                 const hasOne = attribute.value.relation.hasOne!;
@@ -48,6 +65,25 @@ const createModel = (options: ModelOptions) => {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
                             return this.hasOne(target, hasOne.foreignKey, hasOne.foreignKeyTarget);
+                        },
+                    };
+                }
+            }
+            if (attribute.value.relation.hasMany) {
+                const hasMany = attribute.value.relation.hasMany!;
+                if (attribute.value.targetModel === 'self') {
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.hasMany(model, hasMany.foreignKey, hasMany.foreignKeyTarget);
+                        },
+                    }
+                } else {
+                    const target = attribute.value.targetModel().getBookshelfModel();
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.hasMany(target, hasMany.foreignKey, hasMany.foreignKeyTarget);
                         },
                     };
                 }

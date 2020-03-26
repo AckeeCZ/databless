@@ -220,6 +220,42 @@ describe('Repository (Knex/Bookshelf)', () => {
             });
         });
     });
+    describe('model-hasMany', () => {
+        let knex: Knex;
+        const relatedModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'related_model',
+            attributes: {
+                id: { type: 'number' },
+            },
+        });
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                hasManyRelationReflexive: {
+                    type: 'relation',
+                    targetModel: 'self',
+                    relation: repository.bookshelfRelation.createHasOne({
+                        foreignKey: 'id',
+                    }),
+                },
+                hasMany: {
+                    type: 'relation',
+                    targetModel: () => relatedModel,
+                    relation: repository.bookshelfRelation.createHasOne(),
+                },
+            },
+        });
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await db.createTable(relatedModel);
+            const modelRecord = await repository.create(model, {});
+            await repository.create(relatedModel, { model_id: modelRecord.id });
+        });
+    });
     //     const ;
     //     const reset = async () => {
     //         if (knex) {
