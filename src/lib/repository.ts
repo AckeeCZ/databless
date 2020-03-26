@@ -41,7 +41,7 @@ export const create = async <A extends Record<string, Attribute>>(model: Model<A
 
 export const list = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: any, options?: any): Promise<Attributes2Entity<A>[]> => {
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
-        .fetchAll();
+        .fetchAll(options);
     return bookshelfUtil.serializer(options)(result);
 };
 

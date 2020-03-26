@@ -16,7 +16,7 @@ export interface BookshelfRelation {
 }
 
 const bookshelfRelation = {
-    createHasOne: (opts?: BookshelfRelationHasOne): BookshelfRelation => ({
+    createHasOne: (opts: BookshelfRelationHasOne = {}): BookshelfRelation => ({
         isRelation: true,
         hasOne: opts,
     }),
@@ -34,13 +34,11 @@ const createModel = (options: ModelOptions) => {
         .reduce((acc, attribute) => {
             if (attribute.value.relation.hasOne) {
                 const hasOne = attribute.value.relation.hasOne!;
+                const target = attribute.value.targetModel().getBookshelfModel();
                 acc = {
                     ...acc,
                     [attribute.name](this: any /* TODO Type */ ) {
-                        // TODO HIGH: Shit. Prvni argument musi bejt model objekt, anebo klic do Model registry BS
-                        // --> Modely musi mit jmena, ale pri vytvoreni je clovek neovlivni
-                        // --> Predat model objekt nepripada v uvahu
-                        return this.hasOne(attribute.value.targetModel().bookshelfModel, hasOne.foreignKey, hasOne.foreignKeyTarget);
+                        return this.hasOne(target, hasOne.foreignKey, hasOne.foreignKeyTarget);
                     },
                 };
             }

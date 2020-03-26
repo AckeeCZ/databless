@@ -192,6 +192,15 @@ describe('Repository (Knex/Bookshelf)', () => {
                 expect(result.hasOne).toEqual(undefined);
             });
         });
+        test.only('Fetch with related model', async () => {
+            const results = await repository.list(model, {}, { withRelated: ['hasOne'] });
+            const relatedEntity = (await repository.list(relatedModel))[0];
+            expect(results.length).toBeGreaterThan(0);
+            results.forEach(result => {
+                console.log(result);
+                expect(result.hasOne.id).toEqual(relatedEntity.id);
+            });
+        });
     });
     //     const ;
     //     const reset = async () => {
