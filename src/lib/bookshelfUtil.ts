@@ -25,6 +25,7 @@ const bookshelfRelation = {
 const createModel = (options: ModelOptions) => {
     const knex: Knex = options.adapter();
     const bookshelf: Bookshelf = require('bookshelf')(knex);
+    let model: Bookshelf.Model<any>;
     const modelOptions: Bookshelf.ModelOptions = Object.keys(options.attributes)
         .map(key => ({
             name: key,
@@ -34,17 +35,26 @@ const createModel = (options: ModelOptions) => {
         .reduce((acc, attribute) => {
             if (attribute.value.relation.hasOne) {
                 const hasOne = attribute.value.relation.hasOne!;
-                const target = (attribute.value.targetModel as any)().getBookshelfModel();
-                acc = {
-                    ...acc,
-                    [attribute.name](this: any /* TODO Type */ ) {
-                        return this.hasOne(target, hasOne.foreignKey, hasOne.foreignKeyTarget);
-                    },
-                };
+                if (attribute.value.targetModel === 'self') {
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.hasOne(model, hasOne.foreignKey, hasOne.foreignKeyTarget);
+                        },
+                    }
+                } else {
+                    const target = attribute.value.targetModel().getBookshelfModel();
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.hasOne(target, hasOne.foreignKey, hasOne.foreignKeyTarget);
+                        },
+                    };
+                }
             }
             return acc;
         }, { tableName: options.collectionName });
-    const model: Bookshelf.Model<any> = bookshelf.Model.extend(modelOptions) as any;
+    model = bookshelf.Model.extend(modelOptions) as any;
     return model;
 };
 /**

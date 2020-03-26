@@ -171,6 +171,13 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'model',
             attributes: {
                 id: { type: 'number' },
+                hasOneRelationReflexive: {
+                    type: 'relation',
+                    targetModel: 'self',
+                    relation: repository.bookshelfRelation.createHasOne({
+                        foreignKey: 'id',
+                    }),
+                },
                 hasOneRelation: {
                     type: 'relation',
                     targetModel: () => relatedModel,
@@ -202,6 +209,14 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(results.length).toBeGreaterThan(0);
             results.forEach(result => {
                 expect(result.hasOneRelation.id).toEqual(relatedEntity.id);
+            });
+        });
+
+        test('Fetch with related model (reflexive)', async () => {
+            const results = await repository.list(model, {}, { withRelated: ['hasOneRelationReflexive'] });
+            expect(results.length).toBeGreaterThan(0);
+            results.forEach(result => {
+                expect(result.hasOneRelationReflexive.id).toEqual(result.id);
             });
         });
     });
