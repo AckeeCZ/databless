@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { pick } from 'lodash';
+import { memoize, pick } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
@@ -32,7 +32,7 @@ export interface Model<A extends Record<string, Attribute> = Record<string, Attr
 export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 
 export const create = async <A extends Record<string, Attribute>>(model: Model<A>, data: any /* TODO Type */, options?: any /* TODO Type */): Promise<Attributes2Entity<A>> => {
-    const result = await (new (model.getBookshelfModel())())
+    const result = await (model.getBookshelfModel().forge())
         .save(pick(data, model.attributeNames), options);
     return bookshelfUtil.serializer(options)(result);
 };
@@ -52,7 +52,7 @@ export const detail = async <A extends Record<string, Attribute>>(model: Model<A
 };
 
 export const createModel = <A extends Record<string, Attribute>>(options: ModelOptions<A>): Model<A> => {
-    const getBookshelfModel: () => any /* TODO Type */ = () => bookshelfUtil.createModel(options);
+    const getBookshelfModel: () => any /* TODO Type */ = memoize(() => bookshelfUtil.createModel(options));
     const attributeNames = Object.keys(options.attributes);
     return {
         options,

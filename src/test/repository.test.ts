@@ -47,7 +47,7 @@ const db = (() => {
             await knex.destroy();
             knex = undefined as any;
         }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
+        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
         return knex as any;
     };
     const disconnect = async () => {

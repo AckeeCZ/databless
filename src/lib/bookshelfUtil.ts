@@ -22,18 +22,6 @@ const bookshelfRelation = {
     }),
 };
 
-export const registry = (() => {
-    const store = new WeakMap();
-    return {
-        get: (modelOptions: ModelOptions) => {
-            if (!store.has(modelOptions)) {
-                return store.set(modelOptions, createModel(modelOptions));
-            }
-            return store.get(modelOptions);
-        },
-    };
-})();
-
 const createModel = (options: ModelOptions) => {
     const knex: Knex = options.adapter();
     const bookshelf: Bookshelf = require('bookshelf')(knex);
