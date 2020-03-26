@@ -40,8 +40,10 @@ describe.skip('Model types', () => {
         relation: repository.bookshelfRelation.createHasOne({
             // foreignKey: 'cat_id',
         }),
-        targetModel: () => whiskerModel as any,
-    };
+        targetModel: () => whiskerModel,
+    } as const;
     type test = repository.AttributeRelation2Type<typeof whiskerRelation>;
     type Cat = repository.Model2Entity<typeof catModel>;
+    const cat = null as any as Cat;
+    cat.whiskers.
 });
