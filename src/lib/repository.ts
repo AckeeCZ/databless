@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { memoize, pick } from 'lodash';
+import { isEmpty, memoize, pick } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
@@ -61,7 +61,24 @@ export const list = async <A extends Record<string, Attribute>>(model: Model<A>,
 export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: any, options?: any): Promise<Attributes2Entity<A>> => {
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
-        .fetchAll(options);
+        .fetch(options);
+    return bookshelfUtil.serializer(options)(result);
+};
+
+/**
+ * Return value may vary on
+ * @param model 
+ * @param filter 
+ * @param data 
+ * @param options 
+ */
+export const update = async <A extends Record<string, Attribute>>(model: Model<A>, filter: any, data?: any /* TODO Type */, options: any /* TODO Type*/ = {}): Promise<Attributes2Entity<A> | undefined> => {
+    // TODO `defaultPagination` from master
+    if (!data || isEmpty(data)) {
+        return;
+    }
+    const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+        .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
 };
 

@@ -106,6 +106,42 @@ describe('Repository (Knex/Bookshelf)', () => {
             `);
         });
     });
+    describe('Single model update', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                string: { type: 'string' },
+                string2: { type: 'string' },
+            },
+        });
+        let record: repository.Model2Entity<typeof model>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            record = await repository.create(model, {});
+        });
+        test('Empty update does nothing (empty object)', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.update(model, { id: record.id }, {});
+            const after = await repository.detail(model, { id: record.id });
+            expect(after).toMatchObject(before);
+        });
+        test('Empty update does nothing (undefined)', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.update(model, { id: record.id });
+            const after = await repository.detail(model, { id: record.id });
+            expect(after).toMatchObject(before);
+        });
+        test('Multifield update', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.update(model, { id: record.id }, { string: 'stringupdated', string2: 'string2updated' });
+            const after = await repository.detail(model, { id: record.id });
+            expect(after).toMatchObject({ ...before, string: 'stringupdated', string2: 'string2updated' });
+        });
+    });
     describe('Single model read', () => {
         let knex: Knex;
         const model = repository.createModel({
