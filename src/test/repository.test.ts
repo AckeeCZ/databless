@@ -271,11 +271,12 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'model',
             attributes: {
                 id: { type: 'number' },
+                model_id: { type: 'number' },
                 hasManyRelationReflexive: {
                     type: 'relation',
                     targetModel: 'self',
                     relation: repository.bookshelfRelation.createHasMany({
-                        foreignKey: 'id',
+                        foreignKey: 'model_id',
                     }),
                 },
                 hasManyRelation: {
@@ -285,30 +286,38 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
+        let motherRecord: repository.Model2Entity<typeof model>;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
             await db.createTable(relatedModel);
-            const modelRecord = await repository.create(model, {});
-            await repository.create(relatedModel, { model_id: modelRecord.id });
-            await repository.create(relatedModel, { model_id: modelRecord.id });
+            motherRecord = await repository.create(model, {});
+            await Promise.all([
+                repository.create(model, { model_id: motherRecord.id }),
+                repository.create(model, { model_id: motherRecord.id }),
+                repository.create(relatedModel, { model_id: motherRecord.id }),
+                repository.create(relatedModel, { model_id: motherRecord.id }),
+            ]);
         });
         test('Fetch with related models', async () => {
-            const results = await repository.list(model, {}, { withRelated: ['hasManyRelation'] });
-            expect(results.length).toBeGreaterThan(0);
-            results.forEach(result => {
-                expect((result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */).length)
-                    .toBeGreaterThanOrEqual(1);
-                (result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */)
-                    .forEach(relation => {
-                        expect(relation.id).toBeDefined();
-                        expect(relation.model_id).toEqual(result.id);
-                    });
-            });
+            const result = await repository.detail(model, { id: motherRecord.id }, { withRelated: ['hasManyRelation'] });
+            expect((result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */).length)
+                .toBeGreaterThanOrEqual(1);
+            (result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */)
+                .forEach(relation => {
+                    expect(relation.id).toBeDefined();
+                    expect(relation.model_id).toEqual(result.id);
+                });
         });
-
-        test.skip('Fetch with related models (reflexive)', async () => {
-            // TODO
+        test('Fetch with related models (reflexive)', async () => {
+            const result = await repository.detail(model, { id: motherRecord.id }, { withRelated: ['hasManyRelationReflexive'] });
+            expect((result.hasManyRelationReflexive as any as Array<any> /* TODO Remove when types are fixed */).length)
+                .toBeGreaterThanOrEqual(1);
+            (result.hasManyRelationReflexive as any as Array<any> /* TODO Remove when types are fixed */)
+                .forEach(relation => {
+                    expect(relation.id).toBeDefined();
+                    expect(relation.model_id).toEqual(result.id);
+                });
         });
     });
     //     const ;
