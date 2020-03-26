@@ -5,21 +5,24 @@ import * as bookshelfUtil from './bookshelfUtil';
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
 type PrimitiveToType<P> = P extends 'string' ? string : P extends 'date' ? Date : P extends 'number' ? number : P extends 'bool' ? boolean : P extends 'object' ? any : never;
 
-export type AttributeRelation2Type<P, S = never> = P extends { type: 'relation' }
-    ? P extends { targetModel: 'self' }
-        ? S extends Record<string, Attribute>
-            ? Attributes2Entity<S>
-            : never
-        : P extends { targetModel: () => infer M }
-        ? M extends Model
-            ? Model2Entity<M>
-            : never
+type AttributeRelation2Target<P, S = never> = P extends { targetModel: 'self' }
+    ? S extends Record<string, Attribute>
+        ? Attributes2Entity<S>
+        : never
+    : P extends { targetModel: () => infer M }
+    ? M extends Model
+        ? Model2Entity<M>
         : never
     : never;
+
+export type AttributeRelation2Type<P, S = never> = P extends { type: 'relation' }
+    ? P extends { relation: { collection: true } } ? AttributeRelation2Target<P, S>[] : AttributeRelation2Target<P, S>
+    : never;
+
 type Attribute2Type<P, S = never> = P extends AttributeRelation ? AttributeRelation2Type<P, S> : P extends { deserialize: (x: any) => infer R } ? R : P extends { type: infer X } ? PrimitiveToType<X> : never;
 type PrimitiveAttribute = { type: Primitive, serialize?: (x: any) => PrimitiveToType<Primitive>, deserialize?: (x: any) => any };
 type Attribute = AttributeRelation | PrimitiveAttribute;
-export type Relation = { collection: true } | { collection: false }
+export type Relation = { collection: boolean }
 export type AttributeRelation<A extends Record<string, PrimitiveAttribute> = Record<string, PrimitiveAttribute>, R extends Relation = any> = {
     type: 'relation'
     targetModel: (() => Model<A>) | 'self'

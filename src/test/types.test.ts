@@ -25,16 +25,30 @@ describe.skip('Model types', () => {
                 id?: string
                 name: string
             } => JSON.parse(cat) },
-            whiskers: {
+            whisker: {
                 type: 'relation',
                 relation: repository.bookshelfRelation.createHasOne({
                     // foreignKey: 'cat_id',
                 }),
                 targetModel: () => whiskerModel,
             },
-            motherCat: {
+            mother: {
                 type: 'relation',
                 relation: repository.bookshelfRelation.createHasOne({
+                    // foreignKey: 'cat_id',
+                }),
+                targetModel: 'self',
+            },
+            whiskers: {
+                type: 'relation',
+                relation: repository.bookshelfRelation.createHasMany({
+                    // foreignKey: 'cat_id',
+                }),
+                targetModel: () => whiskerModel,
+            },
+            mothers: {
+                type: 'relation',
+                relation: repository.bookshelfRelation.createHasMany({
                     // foreignKey: 'cat_id',
                 }),
                 targetModel: 'self',
@@ -52,5 +66,8 @@ describe.skip('Model types', () => {
     type test = repository.AttributeRelation2Type<typeof whiskerRelation>;
     type Cat = repository.Model2Entity<typeof catModel>;
     const cat = null as any as Cat;
-    cat.motherCat
+    cat.whisker.;
+    cat.whiskers.;
+    cat.mother.;
+    cat.mothers.;
 });
