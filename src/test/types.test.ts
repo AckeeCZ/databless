@@ -4,7 +4,7 @@ import * as repository from '../lib/repository';
 describe('Model types', () => {
     const knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
     const whiskerModel = repository.createModel({
-        adapter: knex,
+        adapter: () => knex,
         collectionName: 'whiskers',
         attributes: {
             length: { type: 'number' },
@@ -13,7 +13,7 @@ describe('Model types', () => {
         },
     });
     const catModel = repository.createModel({
-        adapter: knex,
+        adapter: () => knex,
         attributes: {
             name: { type: 'string' },
             paws: { type: 'number' },
@@ -34,5 +34,13 @@ describe('Model types', () => {
         },
         collectionName: 'cats',
     });
-    type Cat = repository.Model2Entity<typeof catModel>
+    const whiskerRelation = {
+        type: 'relation',
+        relation: repository.bookshelfRelation.createHasOne({
+            // foreignKey: 'cat_id',
+        }),
+        targetModel: () => whiskerModel as any,
+    };
+    type test = repository.AttributeRelation2Type<typeof whiskerRelation>;
+    type Cat = repository.Model2Entity<typeof catModel>;
 });

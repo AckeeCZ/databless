@@ -1,5 +1,5 @@
 import Bookshelf, { Model } from 'bookshelf';
-import { QueryBuilder } from 'knex';
+import Knex, { QueryBuilder } from 'knex';
 import { forEach, isArray, isObject, isString, negate, pickBy, snakeCase } from 'lodash';
 import { ModelOptions, AttributeRelation } from './repository';
 
@@ -16,13 +16,27 @@ export interface BookshelfRelation {
 }
 
 const bookshelfRelation = {
-    createHasOne: (opts: BookshelfRelationHasOne): BookshelfRelation => ({
+    createHasOne: (opts?: BookshelfRelationHasOne): BookshelfRelation => ({
         isRelation: true,
         hasOne: opts,
     }),
 };
+
+export const registry = (() => {
+    const store = new WeakMap();
+    return {
+        get: (modelOptions: ModelOptions) => {
+            if (!store.has(modelOptions)) {
+                return store.set(modelOptions, createModel(modelOptions));
+            }
+            return store.get(modelOptions);
+        },
+    };
+})();
+
 const createModel = (options: ModelOptions) => {
-    const bookshelf: Bookshelf = require('bookshelf')(options.adapter);
+    const knex: Knex = options.adapter();
+    const bookshelf: Bookshelf = require('bookshelf')(knex);
     const modelOptions: Bookshelf.ModelOptions = Object.keys(options.attributes)
         .map(key => ({
             name: key,
@@ -103,6 +117,7 @@ const select = (queryParams: any = {}, options: any = {}) => {
     };
 };
 const count = (options: any = {}, model: ReturnType<typeof createModel>) => {
+    // TODO How about now to have a `count` option, but have a clean `.count` method instead
     if (!options.count) return (qb: QueryBuilder) => qb;
     const { tableName, idAttribute } = (model as any /* TODO Type */).forge();
 

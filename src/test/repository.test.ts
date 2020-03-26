@@ -9,9 +9,9 @@ const db = (() => {
      * - PRIMARY KEY - attribute `id` is always set as BigInt Primary key
      * @param model repository.Model
      */
-    const createTable = async (model: repository.Model<any>) => {
+    const createTable = async (model: repository.Model) => {
         // TODO Cast needed, model.options is any
-        const modelOptions: repository.ModelOptions = model.options;
+        const modelOptions = model.options;
         await knex.schema.createTable(modelOptions.collectionName, table => {
             Array.from(Object.entries(modelOptions.attributes)).forEach(([name, attribute]) => {
                 if (name === 'id') {
@@ -42,13 +42,13 @@ const db = (() => {
             });
         });
     };
-    const reset = async () => {
+    const reset = async (): Promise<Knex> => {
         if (knex) {
             await knex.destroy();
             knex = undefined as any;
         }
         knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
-        return knex as Knex;
+        return knex as any;
     };
     const disconnect = async () => {
         await knex.destroy();
@@ -65,17 +65,17 @@ describe('Repository (Knex/Bookshelf)', () => {
         await db.disconnect();
     });
     describe('Single model create', () => {
-        let model: repository.Model<any>; //TODO Type
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                string: { type: 'string' },
+            },
+        });
         beforeAll(async () => {
-            const knex = await db.reset();
-            model = repository.createModel({
-                adapter: knex,
-                collectionName: 'model',
-                attributes: {
-                    id: { type: 'number' },
-                    string: { type: 'string' },
-                },
-            });
+            knex = await db.reset();
             await db.createTable(model);
         });
         test('Create with no data creates only automatically set fields', async () => {
@@ -107,7 +107,16 @@ describe('Repository (Knex/Bookshelf)', () => {
         });
     });
     describe('Single model read', () => {
-        let model: repository.Model<any>; //TODO Type
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                string: { type: 'string' },
+                number: { type: 'number' },
+            },
+        });
         const inputData = [
             {
                 string: 'abcdefg',
@@ -119,16 +128,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             },
         ];
         beforeAll(async () => {
-            const knex = await db.reset();
-            model = repository.createModel({
-                adapter: knex,
-                collectionName: 'model',
-                attributes: {
-                    id: { type: 'number' },
-                    string: { type: 'string' },
-                    number: { type: 'number' },
-                },
-            });
+            knex = await db.reset();
             await db.createTable(model);
             await Promise.all(
                 inputData.map(data => repository.create(model, data))
@@ -154,6 +154,43 @@ describe('Repository (Knex/Bookshelf)', () => {
                     .filter(data => (data.string === filter.string))
                     .length
             );
+        });
+    });
+    describe('model-hasOne', () => {
+        let knex: Knex;
+        const relatedModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'related_model',
+            attributes: {
+                id: { type: 'number' },
+                model_id: { type: 'number' },
+            },
+        });
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                hasOne: {
+                    type: 'relation',
+                    targetModel: () => relatedModel,
+                    relation: repository.bookshelfRelation.createHasOne(),
+                },
+            },
+        });
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await db.createTable(relatedModel);
+            const modelRecord = await repository.create(model, {});
+            await repository.create(relatedModel, { model_id: modelRecord.id });
+        });
+        test('Default fetch is without relations', async () => {
+            const results = await repository.list(model);
+            expect(results.length).toBeGreaterThan(0);
+            results.forEach(result => {
+                expect(result.hasOne).toEqual(undefined);
+            });
         });
     });
     //     const ;
