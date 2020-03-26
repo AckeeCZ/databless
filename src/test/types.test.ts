@@ -32,6 +32,13 @@ describe.skip('Model types', () => {
                 }),
                 targetModel: () => whiskerModel,
             },
+            motherCat: {
+                type: 'relation',
+                relation: repository.bookshelfRelation.createHasOne({
+                    // foreignKey: 'cat_id',
+                }),
+                targetModel: 'self',
+            },
         },
         collectionName: 'cats',
     });
@@ -45,5 +52,5 @@ describe.skip('Model types', () => {
     type test = repository.AttributeRelation2Type<typeof whiskerRelation>;
     type Cat = repository.Model2Entity<typeof catModel>;
     const cat = null as any as Cat;
-    cat.whiskers.
+    cat.motherCat
 });
