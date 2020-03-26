@@ -27,11 +27,26 @@ export interface BookshelfRelationBelongsTo {
     foreignKeyTarget?: string
 }
 
+export interface BookshelfRelationBelongsToMany {
+    // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
+    /** Name of the joining table. Defaults to the two table names ordered alphabetically and joined by an underscore. */
+    joinTableName?: string;
+    /** Foreign key in this model. By default, the foreignKey is assumed to be the singular form of this model's tableName, followed by _id / _{{idAttribute}}. */
+    foreignKey?: string;
+    /** Foreign key in the Target model. By default, this is assumed to be the singular form of the Target model's tableName, followed by _id / _{{idAttribute}}. */
+    otherKey?: string;
+    /** Column in this model's table which foreignKey references. This is only needed if it's not the default id / idAttribute. */
+    foreignKeyTarget?: string;
+    /** Column in the Target model's table which otherKey references. This is only needed, if it's not the expected default of the Target model's id / idAttribute. */
+    otherKeyTarget?: string;
+}
+
 export type BookshelfRelation = Relation & {
     isRelation: true;
     hasOne?: BookshelfRelationHasOne;
     hasMany?: BookshelfRelationHasMany;
     belongsTo?: BookshelfRelationBelongsTo;
+    belongsToMany?: BookshelfRelationBelongsToMany;
 };
 
 const bookshelfRelation = {
@@ -49,6 +64,11 @@ const bookshelfRelation = {
         collection: false as const,
         isRelation: true,
         belongsTo: opts,
+    }),
+    createBelongsToMany: (opts: BookshelfRelationBelongsToMany = {}) => ({
+        collection: true as const,
+        isRelation: true,
+        belongsToMany: opts,
     }),
 };
 
@@ -116,6 +136,35 @@ const createModel = (options: ModelOptions) => {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
                             return this.belongsTo(target, belongsTo.foreignKey, belongsTo.foreignKeyTarget);
+                        },
+                    };
+                }
+            }
+            if (attribute.value.relation.belongsToMany) {
+                const belongsToMany = attribute.value.relation.belongsToMany!;
+                if (attribute.value.targetModel === 'self') {
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.belongsToMany(model,
+                                belongsToMany.joinTableName,
+                                belongsToMany.foreignKey,
+                                belongsToMany.otherKey,
+                                belongsToMany.foreignKeyTarget,
+                                belongsToMany.otherKeyTarget);
+                        },
+                    };
+                } else {
+                    const target = attribute.value.targetModel().getBookshelfModel();
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.belongsToMany(target,
+                                belongsToMany.joinTableName,
+                                belongsToMany.foreignKey,
+                                belongsToMany.otherKey,
+                                belongsToMany.foreignKeyTarget,
+                                belongsToMany.otherKeyTarget);
                         },
                     };
                 }

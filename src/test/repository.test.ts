@@ -322,16 +322,6 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('model-belongsTo', () => {
         let knex: Knex;
-        // TODO Save for belongsToMany
-        // Defined for the Migration util to create the table
-        // const joinModel = repository.createModel({
-        //     adapter: () => knex,
-        //     collectionName: 'model_related_model',
-        //     attributes: {
-        //         model_id: { type: 'number' },
-        //         related_model_id: { type: 'number' },
-        //     },
-        // });
         const authorModel = repository.createModel({
             adapter: () => knex,
             collectionName: 'authors',
@@ -379,5 +369,73 @@ describe('Repository (Knex/Bookshelf)', () => {
             const result = await repository.detail(bookModel, { id: book.id }, { withRelated: ['nextBook'] });
             expect(result.nextBook).toMatchObject(book);
         });
+    });
+    describe('model-belongsToMany', () => {
+        let knex: Knex;
+        const accountModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'accounts',
+            attributes: {
+                id: { type: 'number' },
+            },
+        });
+        const userModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'users',
+            attributes: {
+                id: { type: 'number' },
+                // nextBook: {
+                //     type: 'relation',
+                //     targetModel: 'self',
+                //     relation: repository.bookshelfRelation.createBelongsTo({
+                //         foreignKey: 'next_book_id',
+                //     }),
+                // },
+                accounts: {
+                    type: 'relation',
+                    targetModel: () => accountModel,
+                    relation: repository.bookshelfRelation.createBelongsToMany(),
+                },
+            },
+        });
+        // Defined for the Migration util to create the table
+        const usersAccountsModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'accounts_users',
+            attributes: {
+                account_id: { type: 'number' },
+                user_id: { type: 'number' },
+            },
+        });
+        let abigail: repository.Model2Entity<typeof userModel>;
+        let abigailsAccount1: repository.Model2Entity<typeof accountModel>;
+        let abigailsAccount2: repository.Model2Entity<typeof accountModel>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(userModel);
+            await db.createTable(accountModel);
+            await db.createTable(usersAccountsModel);
+            abigail = await repository.create(userModel, {});
+            abigailsAccount1 = await repository.create(accountModel, {});
+            abigailsAccount2 = await repository.create(accountModel, {});
+            await Promise.all([
+                [abigail, abigailsAccount1],
+                [abigail, abigailsAccount2],
+            ]
+                .map(([user, account]) =>
+                    // WTF!! How does BS make this query here?!
+                    // Already found that BS makes select after create, but this one is completely wrong
+                    // 'select `accounts_users`.* from `accounts_users` where `accounts_users`.`id` = ? limit ?'
+                    repository.create(usersAccountsModel, { user_id: user.id, account_id: account.id })
+                )
+            );
+        });
+        test.only('Fetch with related models', async () => {
+            const result = await repository.detail(userModel, { id: abigail.id }, { withRelated: ['accounts'] });
+            [abigailsAccount1, abigailsAccount2]
+                .forEach(account => {
+                    expect(!!result.accounts.find(acc => acc.id === account.id)).toEqual(true);
+                });
+        })
     });
 });
