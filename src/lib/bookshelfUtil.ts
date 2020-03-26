@@ -34,7 +34,7 @@ const createModel = (options: ModelOptions) => {
         .reduce((acc, attribute) => {
             if (attribute.value.relation.hasOne) {
                 const hasOne = attribute.value.relation.hasOne!;
-                const target = attribute.value.targetModel().getBookshelfModel();
+                const target = (attribute.value.targetModel as any)().getBookshelfModel();
                 acc = {
                     ...acc,
                     [attribute.name](this: any /* TODO Type */ ) {

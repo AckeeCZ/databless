@@ -171,7 +171,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'model',
             attributes: {
                 id: { type: 'number' },
-                hasOne: {
+                hasOneRelation: {
                     type: 'relation',
                     targetModel: () => relatedModel,
                     relation: repository.bookshelfRelation.createHasOne(),
@@ -189,16 +189,19 @@ describe('Repository (Knex/Bookshelf)', () => {
             const results = await repository.list(model);
             expect(results.length).toBeGreaterThan(0);
             results.forEach(result => {
-                expect(result.hasOne).toEqual(undefined);
+                expect(result.hasOneRelation).toEqual(undefined);
             });
         });
-        test.only('Fetch with related model', async () => {
-            const results = await repository.list(model, {}, { withRelated: ['hasOne'] });
+
+        // TODO relation named `hasOne` fails due to recursive call, preferring
+        // attribute over bookshelf.prototype.hasOne
+
+        test('Fetch with related model', async () => {
+            const results = await repository.list(model, {}, { withRelated: ['hasOneRelation'] });
             const relatedEntity = (await repository.list(relatedModel))[0];
             expect(results.length).toBeGreaterThan(0);
             results.forEach(result => {
-                console.log(result);
-                expect(result.hasOne.id).toEqual(relatedEntity.id);
+                expect(result.hasOneRelation.id).toEqual(relatedEntity.id);
             });
         });
     });
