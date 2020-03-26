@@ -47,7 +47,7 @@ const db = (() => {
             await knex.destroy();
             knex = undefined as any;
         }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
+        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
         return knex as any;
     };
     const disconnect = async () => {
@@ -320,90 +320,64 @@ describe('Repository (Knex/Bookshelf)', () => {
                 });
         });
     });
-    //     const ;
-    //     const reset = async () => {
-    //         if (knex) {
-    //             await knex.destroy();
-    //             knex = undefined as any;
-    //         }
-    //         knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
-    //     };
-
-    //     const whiskerModel = repository.createModel({
-    //         adapter: knex,
-    //         collectionName: 'whiskers',
-    //         attributes: {
-    //             length: { type: 'number' },
-    //             color: { type: 'string' },
-    //             cat_id: { type: 'number' },
-    //         },
-    //     });
-    //     const catModel = repository.createModel({
-    //         adapter: knex,
-    //         attributes: {
-    //             name: {
-    //                 type: 'string',
-    //             },
-    //             mainWhisker: {
-    //                 type: 'relation',
-    //                 relation: repository.bookshelfRelation.createHasOne({
-    //                     foreignKey: 'cat_id',
-    //                 }),
-    //                 targetModel: () => whiskerModel,
-    //             },
-    //         },
-    //         collectionName: 'cats',
-    //     });
-    //     beforeAll(async () => {
-    //         // Make sure it works
-    //         await knex.raw('select 1');
-    //         // Run migrations
-    //         await knex.schema.createTable('cats', table => {
-    //             table.bigIncrements('id').primary();
-    //             table.string('name');
-    //         });
-    //         await knex.schema.createTable('whiskers', table => {
-    //             table.bigIncrements('id').primary();
-    //             table.decimal('length');
-    //             table.string('color');
-    //             table.bigInteger('cat_id').references('cats.id');
-    //         });
-    //     });
-    //     afterAll(async () => {
-    //         await knex.destroy();
-    //     });
-    //     test('Create', async () => {
-    //         const result = await repository.create(catModel, { name: 'Fluffy' });
-    //         expect(result).toMatchInlineSnapshot(`
-    //             Object {
-    //               "id": 1,
-    //               "name": "Fluffy",
-    //             }
-    //         `);
-    //     });
-    //     describe('Relation hasOne', () => {
-    //         let cat: any; // TODO Type
-    //         let whisker: any; // TODO Type
-    //         beforeAll(async () => {
-    //             cat = await repository.create(catModel, { name: 'Fluffy' });
-    //             whisker = await repository.create(whiskerModel, { length: 10, cat_id: cat.id });
-    //         });
-    //         it('Fetch using withRelated', async () => {
-    //             const populatedCat = await repository.detail(catModel, { id: cat.id }, { withRelated: ['mainWhisker'] });
-    //             expect(populatedCat).toMatchInlineSnapshot(`
-    // Array [
-    //   Object {
-    //     "id": 2,
-    //     "mainWhisker": Object {
-    //       "cat_id": 2,
-    //       "color": null,
-    //       "id": 1,
-    //       "length": 10,
-    //     },
-    //     "name": "Fluffy",
-    //   },
-    // ]
-    // `);
-    //         });
-    //     });
+    describe('model-belongsTo', () => {
+        let knex: Knex;
+        // TODO Save for belongsToMany
+        // Defined for the Migration util to create the table
+        // const joinModel = repository.createModel({
+        //     adapter: () => knex,
+        //     collectionName: 'model_related_model',
+        //     attributes: {
+        //         model_id: { type: 'number' },
+        //         related_model_id: { type: 'number' },
+        //     },
+        // });
+        const authorModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'authors',
+            attributes: {
+                id: { type: 'number' },
+            },
+        });
+        const bookModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'books',
+            attributes: {
+                id: { type: 'number' },
+                author_id: { type: 'number' },
+                next_book_id: { type: 'number' },
+                nextBook: {
+                    type: 'relation',
+                    targetModel: 'self',
+                    relation: repository.bookshelfRelation.createBelongsTo({
+                        foreignKey: 'next_book_id',
+                    }),
+                },
+                author: {
+                    type: 'relation',
+                    targetModel: () => authorModel,
+                    relation: repository.bookshelfRelation.createBelongsTo(),
+                },
+            },
+        });
+        let book: repository.Model2Entity<typeof bookModel>;
+        let author: repository.Model2Entity<typeof authorModel>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(bookModel);
+            await db.createTable(authorModel);
+            author = await repository.create(authorModel, {});
+            book = await repository.create(bookModel, { author_id: author.id });
+            await repository.update(bookModel, { id: book.id }, { next_book_id: book.id });
+            book = await repository.detail(bookModel, { id: book.id });
+        });
+        test('Fetch with related models', async () => {
+            const result = await repository.detail(bookModel, { id: book.id }, { withRelated: ['author'] });
+            expect(result.author).toMatchObject(author);
+        });
+        test('Fetch with related models (reflexive)', async () => {
+            const result = await repository.detail(bookModel, { id: book.id }, { withRelated: ['nextBook'] });
+            expect(result.nextBook).toMatchObject(book);
+        });
+    });
 });

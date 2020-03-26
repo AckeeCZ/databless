@@ -19,10 +19,19 @@ export interface BookshelfRelationHasMany {
     foreignKeyTarget?: string
 }
 
+export interface BookshelfRelationBelongsTo {
+    // Target (from Attribute). Constructor of Model targeted by the join. Can be a string specifying a previously registered model with Bookshelf#model.
+    /** Foreign key in this model. By default, the foreignKey is assumed to be the singular form of the Target model's tableName, followed by _id, or _{{idAttribute}} if the idAttribute property is set. */
+    foreignKey?: string
+    /** Column in the Target model's table which foreignKey references. This is only needed in case it's other than Target model's id / idAttribute. */
+    foreignKeyTarget?: string
+}
+
 export type BookshelfRelation = Relation & {
     isRelation: true;
     hasOne?: BookshelfRelationHasOne;
     hasMany?: BookshelfRelationHasMany;
+    belongsTo?: BookshelfRelationBelongsTo;
 };
 
 const bookshelfRelation = {
@@ -35,6 +44,11 @@ const bookshelfRelation = {
         collection: true as const,
         isRelation: true,
         hasMany: opts,
+    }),
+    createBelongsTo: (opts: BookshelfRelationBelongsTo = {}) => ({
+        collection: false as const,
+        isRelation: true,
+        belongsTo: opts,
     }),
 };
 
@@ -83,6 +97,25 @@ const createModel = (options: ModelOptions) => {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
                             return this.hasMany(target, hasMany.foreignKey, hasMany.foreignKeyTarget);
+                        },
+                    };
+                }
+            }
+            if (attribute.value.relation.belongsTo) {
+                const belongsTo = attribute.value.relation.belongsTo!;
+                if (attribute.value.targetModel === 'self') {
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.belongsTo(model, belongsTo.foreignKey, belongsTo.foreignKeyTarget);
+                        },
+                    };
+                } else {
+                    const target = attribute.value.targetModel().getBookshelfModel();
+                    acc = {
+                        ...acc,
+                        [attribute.name](this: any /* TODO Type */ ) {
+                            return this.belongsTo(target, belongsTo.foreignKey, belongsTo.foreignKeyTarget);
                         },
                     };
                 }
