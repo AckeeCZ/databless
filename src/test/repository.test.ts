@@ -227,6 +227,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'related_model',
             attributes: {
                 id: { type: 'number' },
+                model_id: { type: 'number' },
             },
         });
         const model = repository.createModel({
@@ -237,14 +238,14 @@ describe('Repository (Knex/Bookshelf)', () => {
                 hasManyRelationReflexive: {
                     type: 'relation',
                     targetModel: 'self',
-                    relation: repository.bookshelfRelation.createHasOne({
+                    relation: repository.bookshelfRelation.createHasMany({
                         foreignKey: 'id',
                     }),
                 },
-                hasMany: {
+                hasManyRelation: {
                     type: 'relation',
                     targetModel: () => relatedModel,
-                    relation: repository.bookshelfRelation.createHasOne(),
+                    relation: repository.bookshelfRelation.createHasMany(),
                 },
             },
         });
@@ -254,6 +255,24 @@ describe('Repository (Knex/Bookshelf)', () => {
             await db.createTable(relatedModel);
             const modelRecord = await repository.create(model, {});
             await repository.create(relatedModel, { model_id: modelRecord.id });
+            await repository.create(relatedModel, { model_id: modelRecord.id });
+        });
+        test('Fetch with related models', async () => {
+            const results = await repository.list(model, {}, { withRelated: ['hasManyRelation'] });
+            expect(results.length).toBeGreaterThan(0);
+            results.forEach(result => {
+                expect((result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */).length)
+                    .toBeGreaterThanOrEqual(1);
+                (result.hasManyRelation as any as Array<any> /* TODO Remove when types are fixed */)
+                    .forEach(relation => {
+                        expect(relation.id).toBeDefined();
+                        expect(relation.model_id).toEqual(result.id);
+                    });
+            });
+        });
+
+        test.skip('Fetch with related models (reflexive)', async () => {
+            // TODO
         });
     });
     //     const ;

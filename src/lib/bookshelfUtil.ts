@@ -23,16 +23,16 @@ export type BookshelfRelation = Relation & {
     isRelation: true;
     hasOne?: BookshelfRelationHasOne;
     hasMany?: BookshelfRelationHasMany;
-}
+};
 
 const bookshelfRelation = {
-    createHasOne: (opts: BookshelfRelationHasOne = {}): BookshelfRelation => ({
-        collection: false,
+    createHasOne: (opts: BookshelfRelationHasOne = {}) => ({
+        collection: false as const,
         isRelation: true,
         hasOne: opts,
     }),
-    createHasMany: (opts: BookshelfRelationHasMany = {}): BookshelfRelation => ({
-        collection: false,
+    createHasMany: (opts: BookshelfRelationHasMany = {}) => ({
+        collection: true as const,
         isRelation: true,
         hasMany: opts,
     }),
@@ -41,7 +41,6 @@ const bookshelfRelation = {
 const createModel = (options: ModelOptions) => {
     const knex: Knex = options.adapter();
     const bookshelf: Bookshelf = require('bookshelf')(knex);
-    const x: AttributeRelation<any, BookshelfRelation>;
     let model: Bookshelf.Model<any>;
     const modelOptions: Bookshelf.ModelOptions = Object.keys(options.attributes)
         .map(key => ({
