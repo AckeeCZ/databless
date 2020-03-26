@@ -65,9 +65,11 @@ describe.skip('Model types', () => {
     } as const;
     type test = repository.AttributeRelation2Type<typeof whiskerRelation>;
     type Cat = repository.Model2Entity<typeof catModel>;
+    type foo = repository.Model2RelationKeys<typeof catModel>
     const cat = null as any as Cat;
+    // @ts-ignore
     cat.whisker.;
-    cat.whiskers.;
+    cat.whiskers[0].;
     cat.mother.;
-    cat.mothers.;
+    cat.mothers[0].;
 });

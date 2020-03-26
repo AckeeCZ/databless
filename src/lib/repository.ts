@@ -29,7 +29,9 @@ export type AttributeRelation<A extends Record<string, PrimitiveAttribute> = Rec
     relation: R
 }
 export type Attributes2Entity<A extends Record<string, Attribute>> = { [key in keyof A]: A[key] extends Attribute ? Attribute2Type<A[key], A> : never };
+export type Attributes2RelationKeys<A extends Record<string, Attribute>> = { [key in keyof A]: A[key] extends { type: 'relation' } ? key : never }[keyof A];
 export type Model2Entity<M extends Model<any>> = Attributes2Entity<M['options']['attributes']>;
+export type Model2RelationKeys<M extends Model<any>> = Attributes2RelationKeys<M['options']['attributes']>;
 
 export interface ModelOptions<A extends Record<string, Attribute> = Record<string, Attribute>> {
     adapter: () => Knex;
