@@ -60,7 +60,9 @@ interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends R
 }
 interface RepositoryListOptions<A extends Record<string, Attribute>> extends RepositoryDetailOptions<A> {
     count?: true;
-    order?: Attributes2NonRelationKeys<A> | Attributes2NonRelationKeys<A>[]
+    order?: Attributes2NonRelationKeys<A> | Attributes2NonRelationKeys<A>[];
+    limit?: number;
+    offset?: number;
 }
 
 type Filters<A extends Record<string, Attribute>> = Partial<{[key in keyof A]: Attribute2Type<A[key], A> | Attribute2Type<A[key], A>[]}>;
