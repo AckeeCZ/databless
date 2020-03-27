@@ -40,7 +40,7 @@ export interface ModelOptions<A extends Record<string, Attribute> = Record<strin
 }
 
 export interface Model<A extends Record<string, Attribute> = Record<string, Attribute>> {
-    getBookshelfModel: (noRelations?: boolean) => any;
+    getBookshelfModel: () => any;
     attributeNames: string[];
     options: ModelOptions<A>;
 }
@@ -85,20 +85,7 @@ export const update = async <A extends Record<string, Attribute>>(model: Model<A
 };
 
 export const createModel = <A extends Record<string, Attribute>>(options: ModelOptions<A>): Model<A> => {
-    const getBookshelfModel: (noRelations?: boolean) => any /* TODO Type */ = memoize((noRelations) => {
-        if (noRelations) {
-            return bookshelfUtil.createModel({
-                ...options,
-                attributes: Array.from(Object.entries(options.attributes))
-                    .filter(([, attribute]) => attribute.type !== 'relation')
-                    .reduce((acc, [name, att]) => {
-                        acc[name] = att;
-                        return acc;
-                    }, {} as Record<string, any>),
-            });
-        }
-        return bookshelfUtil.createModel(options);
-    });
+    const getBookshelfModel: (noRelations?: boolean) => any /* TODO Type */ = memoize(() => bookshelfUtil.createModel(options));
     const attributeNames = Object.keys(options.attributes);
     return {
         options,

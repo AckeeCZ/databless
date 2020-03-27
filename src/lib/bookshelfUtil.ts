@@ -83,88 +83,54 @@ const createModel = (options: ModelOptions) => {
         }))
         .filter((x): x is { name: string, value: AttributeRelation<any, BookshelfRelation> } => x.value.type === 'relation')
         .reduce((acc, attribute) => {
-            if (attribute.value.relation.hasOne) {
-                const hasOne = attribute.value.relation.hasOne!;
-                if (attribute.value.targetModel === 'self') {
+            const target = attribute.value.targetModel === 'self'
+                ? () => model
+                : () => (attribute.value.targetModel as any /* WTF Type :( */)().getBookshelfModel();
+            {
+                const relation = attribute.value.relation.hasOne;
+                if (relation) {
                     acc = {
                         ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.hasOne(model, hasOne.foreignKey, hasOne.foreignKeyTarget);
-                        },
-                    }
-                } else {
-                    const target = attribute.value.targetModel().getBookshelfModel(true);
-                    acc = {
-                        ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.hasOne(target, hasOne.foreignKey, hasOne.foreignKeyTarget);
+                        [attribute.name](this: any /* TODO Type */) {
+                            return this.hasOne(target(), relation.foreignKey, relation.foreignKeyTarget);
                         },
                     };
                 }
             }
-            if (attribute.value.relation.hasMany) {
-                const hasMany = attribute.value.relation.hasMany!;
-                if (attribute.value.targetModel === 'self') {
+            {
+                const relation = attribute.value.relation.hasMany;
+                if (relation) {
                     acc = {
                         ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.hasMany(model, hasMany.foreignKey, hasMany.foreignKeyTarget);
-                        },
-                    }
-                } else {
-                    const target = attribute.value.targetModel().getBookshelfModel(true);
-                    acc = {
-                        ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.hasMany(target, hasMany.foreignKey, hasMany.foreignKeyTarget);
+                        [attribute.name](this: any /* TODO Type */) {
+                            return this.hasMany(target(), relation.foreignKey, relation.foreignKeyTarget);
                         },
                     };
                 }
             }
-            if (attribute.value.relation.belongsTo) {
-                const belongsTo = attribute.value.relation.belongsTo!;
-                if (attribute.value.targetModel === 'self') {
+            {
+                const relation = attribute.value.relation.belongsTo;
+                if (relation) {
                     acc = {
                         ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.belongsTo(model, belongsTo.foreignKey, belongsTo.foreignKeyTarget);
-                        },
-                    };
-                } else {
-                    const target = attribute.value.targetModel().getBookshelfModel(true);
-                    acc = {
-                        ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.belongsTo(target, belongsTo.foreignKey, belongsTo.foreignKeyTarget);
+                        [attribute.name](this: any /* TODO Type */) {
+                            return this.belongsTo(target(), relation.foreignKey, relation.foreignKeyTarget);
                         },
                     };
                 }
             }
-            if (attribute.value.relation.belongsToMany) {
-                const belongsToMany = attribute.value.relation.belongsToMany!;
-                if (attribute.value.targetModel === 'self') {
+            {
+                const relation = attribute.value.relation.belongsToMany;
+                if (relation) {
                     acc = {
                         ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.belongsToMany(model,
-                                belongsToMany.joinTableName,
-                                belongsToMany.foreignKey,
-                                belongsToMany.otherKey,
-                                belongsToMany.foreignKeyTarget,
-                                belongsToMany.otherKeyTarget);
-                        },
-                    };
-                } else {
-                    const target = attribute.value.targetModel().getBookshelfModel(true);
-                    acc = {
-                        ...acc,
-                        [attribute.name](this: any /* TODO Type */ ) {
-                            return this.belongsToMany(target,
-                                belongsToMany.joinTableName,
-                                belongsToMany.foreignKey,
-                                belongsToMany.otherKey,
-                                belongsToMany.foreignKeyTarget,
-                                belongsToMany.otherKeyTarget);
+                        [attribute.name](this: any /* TODO Type */) {
+                            return this.belongsToMany(target(),
+                                relation.joinTableName,
+                                relation.foreignKey,
+                                relation.otherKey,
+                                relation.foreignKeyTarget,
+                                relation.otherKeyTarget);
                         },
                     };
                 }
