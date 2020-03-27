@@ -47,7 +47,7 @@ const db = (() => {
             await knex.destroy();
             knex = undefined as any;
         }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
+        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
         return knex as any;
     };
     const disconnect = async () => {
@@ -83,7 +83,6 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(result).toMatchInlineSnapshot(`
                 Object {
                   "id": 1,
-                  "string": null,
                 }
             `);
         });
@@ -101,7 +100,6 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(result).toMatchInlineSnapshot(`
                 Object {
                   "id": 3,
-                  "string": null,
                 }
             `);
         });
@@ -377,6 +375,12 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'accounts',
             attributes: {
                 id: { type: 'number' },
+                // users: {
+                //     type: 'relation',
+                //  TODO Circular reference. Dat a problem, bois!
+                //     targetModel: () => userModel,
+                //     relation: repository.bookshelfRelation.createBelongsToMany(),
+                // },
             },
         });
         const userModel = repository.createModel({
@@ -384,13 +388,14 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'users',
             attributes: {
                 id: { type: 'number' },
-                // nextBook: {
-                //     type: 'relation',
-                //     targetModel: 'self',
-                //     relation: repository.bookshelfRelation.createBelongsTo({
-                //         foreignKey: 'next_book_id',
-                //     }),
-                // },
+                friends: {
+                    type: 'relation',
+                    targetModel: 'self',
+                    relation: repository.bookshelfRelation.createBelongsToMany({
+                        foreignKey: 'user_a_id',
+                        otherKey: 'user_b_id',
+                    }),
+                },
                 accounts: {
                     type: 'relation',
                     targetModel: () => accountModel,
@@ -407,7 +412,16 @@ describe('Repository (Knex/Bookshelf)', () => {
                 user_id: { type: 'number' },
             },
         });
+        const usersUsersModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'users_users',
+            attributes: {
+                user_a_id: { type: 'number' },
+                user_b_id: { type: 'number' },
+            },
+        });
         let abigail: repository.Model2Entity<typeof userModel>;
+        let betsy: repository.Model2Entity<typeof userModel>;
         let abigailsAccount1: repository.Model2Entity<typeof accountModel>;
         let abigailsAccount2: repository.Model2Entity<typeof accountModel>;
         beforeAll(async () => {
@@ -415,7 +429,9 @@ describe('Repository (Knex/Bookshelf)', () => {
             await db.createTable(userModel);
             await db.createTable(accountModel);
             await db.createTable(usersAccountsModel);
+            await db.createTable(usersUsersModel);
             abigail = await repository.create(userModel, {});
+            betsy = await repository.create(userModel, {});
             abigailsAccount1 = await repository.create(accountModel, {});
             abigailsAccount2 = await repository.create(accountModel, {});
             await Promise.all([
@@ -423,19 +439,24 @@ describe('Repository (Knex/Bookshelf)', () => {
                 [abigail, abigailsAccount2],
             ]
                 .map(([user, account]) =>
-                    // WTF!! How does BS make this query here?!
-                    // Already found that BS makes select after create, but this one is completely wrong
-                    // 'select `accounts_users`.* from `accounts_users` where `accounts_users`.`id` = ? limit ?'
                     repository.create(usersAccountsModel, { user_id: user.id, account_id: account.id })
                 )
             );
+            repository.create(usersUsersModel, { user_a_id: abigail.id, user_b_id: betsy.id });
         });
-        test.only('Fetch with related models', async () => {
+        test('Fetch with related models', async () => {
             const result = await repository.detail(userModel, { id: abigail.id }, { withRelated: ['accounts'] });
             [abigailsAccount1, abigailsAccount2]
                 .forEach(account => {
                     expect(!!result.accounts.find(acc => acc.id === account.id)).toEqual(true);
                 });
-        })
+        });
+        test('Fetch with related models (reflexive', async () => {
+            const result = await repository.detail(userModel, { id: abigail.id }, { withRelated: ['friends'] });
+            [betsy]
+                .forEach(user => {
+                    expect(!!result.friends.find(friend => friend.id === user.id)).toEqual(true);
+                });
+        });
     });
 });

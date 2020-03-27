@@ -170,7 +170,7 @@ const createModel = (options: ModelOptions) => {
                 }
             }
             return acc;
-        }, { tableName: options.collectionName });
+        }, { tableName: options.collectionName, refresh: () => Promise.resolve({}), });
     model = bookshelf.Model.extend(modelOptions) as any;
     return model;
 };
@@ -187,7 +187,7 @@ const serializer = (options = {} as any) =>
             return result && result.toJSON()[0].total || 0;
         }
         if (result && result.toJSON) {
-            return result.toJSON(options.toJSON);
+            return result.toJSON({ omitPivot: true, ...options.toJSON, });
         }
         return result;
     };
