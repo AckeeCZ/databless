@@ -30,6 +30,7 @@
         "check": "npm-check -i app -i errors -i config -i index & exit 0"
     },
     "dependencies": {
+        "intspector": "^1.0.2",
         "lodash": "^4.17.15"
     },
     "devDependencies": {
