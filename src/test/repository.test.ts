@@ -189,6 +189,34 @@ describe('Repository (Knex/Bookshelf)', () => {
                     .length
             );
         });
+        describe('Order', () => {
+            const byProp = (prop: string) => (a: any, b: any) => (typeof a === 'string' ? a.localeCompare(b) : a[prop] - b[prop]);
+            const omitId = (a: any) => { const {id, ...rest} = a; return rest };
+            test('Order string', async () => {
+                const result = await repository.list(model, {}, { order: 'string' });
+                const resultPlus = await repository.list(model, {}, { order: '+string' });
+                expect(result).toStrictEqual(resultPlus)
+                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('string')));
+            });
+            test('Order -string', async () => {
+                const result = await repository.list(model, {}, { order: '-string' });
+                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('string')).reverse());
+            });
+            test('Order number', async () => {
+                const result = await repository.list(model, {}, { order: 'number' });
+                const resultPlus = await repository.list(model, {}, { order: '+number' });
+                expect(result).toStrictEqual(resultPlus)
+                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')));
+            });
+            test('Order -number', async () => {
+                const result = await repository.list(model, {}, { order: '-number' });
+                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse());
+            });
+            test('Order by multiple', async () => {
+                const result = await repository.list(model, {}, { order: ['-number', 'string'] });
+                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
+            });
+        })
     });
     describe('model-hasOne', () => {
         let knex: Knex;

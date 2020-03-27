@@ -238,13 +238,31 @@ const count = (options: any = {}, model: ReturnType<typeof createModel>) => {
         qb.countDistinct(`${tableName}.${idAttribute} AS total`);
     };
 };
+
+const order = (options: any = {}): ((qb: QueryBuilder) => any) => {
+    // Skip for missing order, skip for count
+    if (!options.order || options.count) return () => {};
+    options.order = (typeof options.order === 'string') ? [options.order] : options.order;
+    if (!Array.isArray(options.order)) throw TypeError(`Invalid order option ${options.order}, expected string or array of strings`);
+    const orderDefs = (options.order as string[]).map(order => {
+        const matches = order.match(/(\+|\-)(.*)/)
+        if (matches === null) return { columnName: order, order: 'ASC' };
+        const [, sign, columnName] = matches;
+        return { columnName, order: sign === '-' ? 'DESC' : 'ASC' }
+    })
+    return qb => {
+        orderDefs.forEach(x => {
+            qb.orderBy(x.columnName, x.order);
+        })
+    };
+};
 const queryModel = (source: ReturnType<typeof createModel>, queryParams?: any, options?: any) => {
     return source
         .query((qb: QueryBuilder) => {
             select(queryParams, options)(qb);
             count(options, source)(qb);
             // paginate(options)(qb);
-            // order(queryParams, options)(qb);
+            order(options)(qb);
         });
 };
 
