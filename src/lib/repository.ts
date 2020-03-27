@@ -53,6 +53,7 @@ export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 
 interface RepositoryMethodOptions {
     toJSON?: SerializeOptions;
+    qb?: bookshelfUtil.QbOption;
 }
 interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends RepositoryMethodOptions {
     // TODO: This type restricts using withRelated on transitive fields

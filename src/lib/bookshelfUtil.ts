@@ -4,6 +4,8 @@ import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase }
 import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery } from './repository';
 
 type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
+
+export type QbOption = (qb: QueryBuilder) => any;
 export interface BookshelfRelationAnyType {
     query?: BookshelfRelationQuery;
 }

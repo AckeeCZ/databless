@@ -19,7 +19,7 @@
 - [x] Like queries
 - [x] Option typing
 - [x] Custom relation queries (e.g. in Bookshelf `this.hasMany().where(...)`)
-- [ ] Custom queries (via options.qb)
+- [x] Custom queries (via options.qb)
 - [x] Pagination (limit/offset)
 - [ ] Cursor streaming
 - [x] Model serialization/deserialization

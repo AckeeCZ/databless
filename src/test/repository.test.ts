@@ -367,6 +367,41 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(result).toEqual(expectedResult);
         });
     });
+    describe('Custom select queries', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                name: { type: 'string' },
+            },
+        });
+        let users: repository.Model2Entity<typeof model>[];
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await Promise.all(
+                [
+                    { name: 'abigail' },
+                    { name: 'betsy' },
+                    { name: 'catherine' },
+                    { name: 'deborah' },
+                ]
+                    .map(user => repository.create(model, user))
+            );
+            users = await repository.list(model);
+        });
+        test('Custom filtering option`', async () => {
+            const threshold = 6;
+            const expectedResult = users
+                .filter(user => user.name.length > threshold);
+            const result = await repository.list(model, {}, { qb: qb => {
+                qb.whereRaw(`LENGTH(name) > ${threshold}`);
+            }});
+            expect(result).toEqual(expectedResult);
+        });
+    });
     describe('Relation default custom queries', () => {
         let knex: Knex;
         const bookModel = repository.createModel({
