@@ -219,6 +219,13 @@ describe('Repository (Knex/Bookshelf)', () => {
                 expect(result).toMatchObject(filter);
             });
         });
+        test('Where in filtering', async () => {
+            const filter = { string: ['hijklmn', 'abcdefg'] };
+            const results = await repository.list(model, filter);
+            results.forEach(result => {
+                expect(filter.string).toContain(result.string);
+            });
+        });
         test('Count using filters', async () => {
             const filter = { number: 10, string: 'hijklmn' };
             const result = await repository.list(model, filter, { count: true });
@@ -234,26 +241,26 @@ describe('Repository (Knex/Bookshelf)', () => {
             const omitId = (a: any) => { const {id, ...rest} = a; return rest };
             test('Order string', async () => {
                 const result = await repository.list(model, {}, { order: 'string' });
-                const resultPlus = await repository.list(model, {}, { order: '+string' });
+                const resultPlus = await repository.list(model, {}, { order: '+string' as any });
                 expect(result).toStrictEqual(resultPlus)
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('string')));
             });
             test('Order -string', async () => {
-                const result = await repository.list(model, {}, { order: '-string' });
+                const result = await repository.list(model, {}, { order: '-string' as any });
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('string')).reverse());
             });
             test('Order number', async () => {
                 const result = await repository.list(model, {}, { order: 'number' });
-                const resultPlus = await repository.list(model, {}, { order: '+number' });
+                const resultPlus = await repository.list(model, {}, { order: '+number' as any });
                 expect(result).toStrictEqual(resultPlus)
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')));
             });
             test('Order -number', async () => {
-                const result = await repository.list(model, {}, { order: '-number' });
+                const result = await repository.list(model, {}, { order: '-number' as any });
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse());
             });
             test('Order by multiple', async () => {
-                const result = await repository.list(model, {}, { order: ['-number', 'string'] });
+                const result = await repository.list(model, {}, { order: ['-number' as any, 'string'] });
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
             });
         })
