@@ -367,6 +367,53 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(result).toEqual(expectedResult);
         });
     });
+    describe('Relation default custom queries', () => {
+        let knex: Knex;
+        const bookModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'books',
+            attributes: {
+                id: { type: 'number' },
+                author_id: { type: 'number' },
+                type: { type: 'string' },
+            },
+        });
+        const authorModel = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'authors',
+            attributes: {
+                id: { type: 'number' },
+                name: { type: 'string' },
+                books: {
+                    type: 'relation',
+                    targetModel: () => bookModel,
+                    relation: repository.bookshelfRelation.createHasMany({
+                        query: (books) => books.where({ type: 'programming' }, false),
+                    }),
+                },
+            },
+        });
+        let author: repository.Model2Entity<typeof authorModel>;
+        let books: repository.Model2Entity<typeof bookModel>[];
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(authorModel);
+            await db.createTable(bookModel);
+            author = await repository.create(authorModel, {});
+            await Promise.all([
+                repository.create(bookModel, { author_id: author.id, type: 'programming' }),
+                repository.create(bookModel, { author_id: author.id, type: 'mathematics' }),
+                repository.create(bookModel, { author_id: author.id, type: 'incantation' }),
+            ]);
+            books = await repository.list(bookModel);
+        });
+        it('x', async () => {
+            const expectedResult = books
+                .filter(book =>  book.type === 'programming');
+            const result = await repository.detail(authorModel, { id: author.id }, { withRelated: ['books'] });
+            expect(result.books).toEqual(expectedResult);
+        });
+    });
     describe('Pagination', () => {
         let knex: Knex;
         const model = repository.createModel({

@@ -3,7 +3,11 @@ import Knex, { QueryBuilder } from 'knex';
 import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase } from 'lodash';
 import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery } from './repository';
 
-export interface BookshelfRelationHasOne {
+type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
+export interface BookshelfRelationAnyType {
+    query?: BookshelfRelationQuery;
+}
+export interface BookshelfRelationHasOne extends BookshelfRelationAnyType {
     // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
     /** Foreign key in the Target model. By default the foreign key is assumed to be the singular form of this model's tableName followed by _id / _{{idAttribute}}. */
     foreignKey?: string
@@ -11,7 +15,7 @@ export interface BookshelfRelationHasOne {
     foreignKeyTarget?: string
 }
 
-export interface BookshelfRelationHasMany {
+export interface BookshelfRelationHasMany extends BookshelfRelationAnyType  {
     // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
     /** ForeignKey in the Target model. By default, the foreign key is assumed to be the singular form of this model's tableName, followed by _id / _{{idAttribute}}. */
     foreignKey?: string
@@ -19,7 +23,7 @@ export interface BookshelfRelationHasMany {
     foreignKeyTarget?: string
 }
 
-export interface BookshelfRelationBelongsTo {
+export interface BookshelfRelationBelongsTo extends BookshelfRelationAnyType  {
     // Target (from Attribute). Constructor of Model targeted by the join. Can be a string specifying a previously registered model with Bookshelf#model.
     /** Foreign key in this model. By default, the foreignKey is assumed to be the singular form of the Target model's tableName, followed by _id, or _{{idAttribute}} if the idAttribute property is set. */
     foreignKey?: string
@@ -27,7 +31,7 @@ export interface BookshelfRelationBelongsTo {
     foreignKeyTarget?: string
 }
 
-export interface BookshelfRelationBelongsToMany {
+export interface BookshelfRelationBelongsToMany extends BookshelfRelationAnyType  {
     // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
     /** Name of the joining table. Defaults to the two table names ordered alphabetically and joined by an underscore. */
     joinTableName?: string;
@@ -47,6 +51,7 @@ export type BookshelfRelation = Relation & {
     hasMany?: BookshelfRelationHasMany;
     belongsTo?: BookshelfRelationBelongsTo;
     belongsToMany?: BookshelfRelationBelongsToMany;
+    query?: BookshelfRelationQuery;
 };
 
 const bookshelfRelation = {
@@ -54,21 +59,25 @@ const bookshelfRelation = {
         collection: false as const,
         isRelation: true,
         hasOne: opts,
+        query: opts.query,
     }),
     createHasMany: (opts: BookshelfRelationHasMany = {}) => ({
         collection: true as const,
         isRelation: true,
         hasMany: opts,
+        query: opts.query,
     }),
     createBelongsTo: (opts: BookshelfRelationBelongsTo = {}) => ({
         collection: false as const,
         isRelation: true,
         belongsTo: opts,
+        query: opts.query,
     }),
     createBelongsToMany: (opts: BookshelfRelationBelongsToMany = {}) => ({
         collection: true as const,
         isRelation: true,
         belongsToMany: opts,
+        query: opts.query,
     }),
 };
 
@@ -86,13 +95,20 @@ const createModel = (options: ModelOptions) => {
             const target = attribute.value.targetModel === 'self'
                 ? () => model
                 : () => (attribute.value.targetModel as any /* WTF Type :( */)().getBookshelfModel();
+            // Allow fine relation query
+            const relationQuery = (relation: Bookshelf.Collection<any>) => {
+                if (!attribute.value.relation.query) {
+                    return relation;
+                }
+                return attribute.value.relation.query(relation);
+            };
             {
                 const relation = attribute.value.relation.hasOne;
                 if (relation) {
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */) {
-                            return this.hasOne(target(), relation.foreignKey, relation.foreignKeyTarget);
+                            return relationQuery(this.hasOne(target(), relation.foreignKey, relation.foreignKeyTarget));
                         },
                     };
                 }
@@ -103,7 +119,7 @@ const createModel = (options: ModelOptions) => {
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */) {
-                            return this.hasMany(target(), relation.foreignKey, relation.foreignKeyTarget);
+                            return relationQuery(this.hasMany(target(), relation.foreignKey, relation.foreignKeyTarget));
                         },
                     };
                 }
@@ -114,7 +130,7 @@ const createModel = (options: ModelOptions) => {
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */) {
-                            return this.belongsTo(target(), relation.foreignKey, relation.foreignKeyTarget);
+                            return relationQuery(this.belongsTo(target(), relation.foreignKey, relation.foreignKeyTarget));
                         },
                     };
                 }
@@ -125,12 +141,12 @@ const createModel = (options: ModelOptions) => {
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */) {
-                            return this.belongsToMany(target(),
+                            return relationQuery(this.belongsToMany(target(),
                                 relation.joinTableName,
                                 relation.foreignKey,
                                 relation.otherKey,
                                 relation.foreignKeyTarget,
-                                relation.otherKeyTarget);
+                                relation.otherKeyTarget));
                         },
                     };
                 }
