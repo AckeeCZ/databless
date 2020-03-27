@@ -265,6 +265,61 @@ describe('Repository (Knex/Bookshelf)', () => {
             });
         })
     });
+    describe('Inequality filtering', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                name: { type: 'string' },
+                notAge: { type: 'number' },
+            },
+        });
+        let users: repository.Model2Entity<typeof model>[];
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await Promise.all(
+                [
+                    { name: 'abigail', notAge: 1 },
+                    { name: 'betsy', notAge: 2 },
+                    { name: 'catherine', notAge: 3 },
+                    { name: 'deborah', notAge: 4 },
+                ]
+                    .map(user => repository.create(model, user))
+            );
+            users = await repository.list(model);
+        });
+        it('`Greater than ({ age: ">1" }` => `age > "1"`)', async () => {
+            const threshold = 2;
+            const expectedResult = users
+                .filter(user => user.notAge > threshold);
+            const result = await repository.list(model, { notAge: `>${threshold}` as any /* TODO Type. Oops. */ });
+            expect(result).toEqual(expectedResult);
+        });
+        it('`Greater or equal than ({ age: ">=1" }` => `age >= "1"`)', async () => {
+            const threshold = 2;
+            const expectedResult = users
+                .filter(user => user.notAge >= threshold);
+            const result = await repository.list(model, { notAge: `>=${threshold}` as any /* TODO Type. Oops. */ });
+            expect(result).toEqual(expectedResult);
+        });
+        it('`Less than ({ age: "<1" }` => `age < "1"`)', async () => {
+            const threshold = 2;
+            const expectedResult = users
+                .filter(user => user.notAge < threshold);
+            const result = await repository.list(model, { notAge: `<${threshold}` as any /* TODO Type. Oops. */ });
+            expect(result).toEqual(expectedResult);
+        });
+        it('`Less or equal than ({ age: "<=1" }` => `age <= "1"`)', async () => {
+            const threshold = 2;
+            const expectedResult = users
+                .filter(user => user.notAge <= threshold);
+            const result = await repository.list(model, { notAge: `<=${threshold}` as any /* TODO Type. Oops. */ });
+            expect(result).toEqual(expectedResult);
+        });
+    });
     describe('Searching (like querying)', () => {
         let knex: Knex;
         const model = repository.createModel({

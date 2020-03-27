@@ -1,7 +1,7 @@
 import Bookshelf, { Model } from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
 import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase } from 'lodash';
-import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards } from './repository';
+import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery } from './repository';
 
 export interface BookshelfRelationHasOne {
     // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
@@ -212,9 +212,49 @@ const wildcards = (() => {
     };
 })();
 
+const rangeQueries = (() => {
+    const queryToSqlCompare = (query: RangeQuery) => {
+        switch (true) {
+            case !!query.range.gt:
+                return ['>', query.range.gt] as const;
+            case !!query.range.gte:
+                return ['>=', query.range.gte] as const;
+            case !!query.range.lt:
+                return ['<', query.range.lt] as const;
+            case !!query.range.lte:
+                return ['<=', query.range.lte] as const;
+            default:
+                throw new Error('Cannot convert Range query to SQL');
+        }
+    };
+    return (filters: any, options: any): [any, any] => {
+        if (!filters) {
+            return  [filters, options];
+        }
+        const queries = repositoryRangeQueries.selectRanges(filters);
+        // Consume attributes
+        filters = omit(filters, queries.map(q => q.range.field));
+        const parentQb = options?.qb;
+        options = {
+            ...options,
+            qb: (qb: QueryBuilder) => {
+                queries.forEach(q => {
+                    const comp = queryToSqlCompare(q);
+                    qb.where(q.range.field, comp[0], comp[1]);
+                });
+                if (parentQb) {
+                    parentQb(qb);
+                }
+            },
+        };
+        return [filters, options];
+    };
+})();
+
 const select = (queryParams: any = {}, options: any = {}) => {
     return (qb: QueryBuilder) => {
         [queryParams, options] = wildcards(queryParams, options);
+        [queryParams, options] = rangeQueries(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
         const primitiveQueryParams = pickBy(queryParams, negate(isArray));
         qb.where(snakelize(primitiveQueryParams));

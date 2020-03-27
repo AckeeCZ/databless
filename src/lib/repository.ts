@@ -147,6 +147,56 @@ const createMapAttributes = (
     };
 };
 
+export type RangeQuery = {
+    range: {
+        field: string;
+        gt?: string | number | number | Date | boolean;
+        lt?: string | number | number | Date | boolean;
+        gte?: string | number | number | Date | boolean;
+        lte?: string | number | number | Date | boolean;
+    };
+};
+
+export const rangeQueries = (() => {
+    enum Sign {
+        Lte = '<=',
+        Lt = '<',
+        Gte = '>=',
+        Gt = '>',
+    }
+    const selectRanges = (filters: any): RangeQuery[] => {
+        return (Array.from(Object.entries(filters))
+            .filter(([, value]) => (typeof value === 'string')) as Array<[string, string]>)
+            .map(([key, value]): RangeQuery => {
+                const gte = value.startsWith(Sign.Gte)
+                    ? value.substr(Sign.Gte.length)
+                    : undefined;
+                const gt = !gte && value.startsWith(Sign.Gt)
+                    ? value.substr(Sign.Gt.length)
+                    : undefined;
+                const lte = value.startsWith(Sign.Lte)
+                    ? value.substr(Sign.Lte.length)
+                    : undefined;
+                const lt = !lte && value.startsWith(Sign.Lt)
+                    ? value.substr(Sign.Lt.length)
+                    : undefined;
+                return {
+                    range: {
+                        gt,
+                        lte,
+                        gte,
+                        lt,
+                        field: key,
+                    },
+                };
+            })
+            .filter(query => query.range.gt || query.range.gte || query.range.lt || query.range.lte);
+    };
+    return {
+        selectRanges,
+    };
+})();
+
 export type WildcardQuery = {
     wildcard: {
         field: string;

@@ -15,7 +15,7 @@
 
 ## TODO
 
-- [ ] Range queries
+- [x] Range queries
 - [x] Like queries
 - [x] Option typing
 - [ ] Custom relation queries (e.g. in Bookshelf `this.hasMany().where(...)`)
