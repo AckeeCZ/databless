@@ -1,7 +1,7 @@
 import Bookshelf, { Model } from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
-import { forEach, isArray, isObject, isString, negate, pickBy, snakeCase } from 'lodash';
-import { ModelOptions, AttributeRelation, Relation } from './repository';
+import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase } from 'lodash';
+import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards } from './repository';
 
 export interface BookshelfRelationHasOne {
     // Target (from Attribute). Constructor of Model targeted by join. Can be a string specifying a previously registered model with Bookshelf#model.
@@ -179,17 +179,48 @@ const snakelize = (obj: any) => {
     });
     return out;
 };
+
+const wildcards = (() => {
+    const queryToSqlLike = (query: WildcardQuery): string => {
+        return [
+            query.wildcard.anyPrefix ? '%' : '',
+            query.wildcard.query,
+            query.wildcard.anySuffix ? '%' : '',
+        ].join('');
+    };
+
+    return (filters: any, options: any): [any, any] => {
+        if (!filters) {
+            return  [filters, options];
+        }
+        const queries = repositoryWildcards.selectWildcards(filters);
+        // Consume attributes
+        filters = omit(filters, queries.map(q => q.wildcard.field));
+        const parentQb = options?.qb;
+        options = {
+            ...options,
+            qb: (qb: QueryBuilder) => {
+                queries.forEach(q => {
+                    qb.where(q.wildcard.field, 'like', queryToSqlLike(q));
+                });
+                if (parentQb) {
+                    parentQb(qb);
+                }
+            },
+        };
+        return [filters, options];
+    };
+})();
+
 const select = (queryParams: any = {}, options: any = {}) => {
     return (qb: QueryBuilder) => {
+        [queryParams, options] = wildcards(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
         const primitiveQueryParams = pickBy(queryParams, negate(isArray));
         qb.where(snakelize(primitiveQueryParams));
         forEach(arrayQueryParams, (value, field) => {
             qb.whereIn(snakelize(field), value);
         });
-        // likes.forEach(([field, value]) => {
-        //     qb.where(snakelize(field), 'like', value);
-        // });
         if (options.qb) {
             options.qb(qb);
         }

@@ -147,6 +147,40 @@ const createMapAttributes = (
     };
 };
 
+export type WildcardQuery = {
+    wildcard: {
+        field: string;
+        query: string;
+        anyPrefix: boolean;
+        anySuffix: boolean;
+    }
+};
+
+export const wildcards = (() => {
+    const rgLeft = /^\*/;
+    const rgRight = /\*$/;
+    const selectWildcards = (filters: any): WildcardQuery[] => {
+        return Array.from(Object.entries(filters))
+            .filter(([, value]) => (typeof value === 'string'))
+            .map(([key, value]): WildcardQuery => {
+                return {
+                    wildcard: {
+                        field: key,
+                        query: (value as string)
+                            .replace(rgLeft, '')
+                            .replace(rgRight, ''),
+                        anyPrefix: rgLeft.test(value as string),
+                        anySuffix: rgRight.test(value as string),
+                    },
+                };
+            })
+            .filter(query => query.wildcard.anyPrefix || query.wildcard.anySuffix);
+    };
+    return {
+        selectWildcards,
+    };
+})();
+
 export const createModel = <A extends Record<string, Attribute>>(options: ModelOptions<A>): Model<A> => {
     const getBookshelfModel: (noRelations?: boolean) => any /* TODO Type */ = memoize(() => bookshelfUtil.createModel(options));
     const attributeNames = Object.keys(options.attributes);

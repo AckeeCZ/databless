@@ -47,7 +47,7 @@ const db = (() => {
             await knex.destroy();
             knex = undefined as any;
         }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
+        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
         return knex as any;
     };
     const disconnect = async () => {
@@ -264,6 +264,53 @@ describe('Repository (Knex/Bookshelf)', () => {
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
             });
         })
+    });
+    describe('Searching (like querying)', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                name: { type: 'string' },
+            },
+        });
+        let users: repository.Model2Entity<typeof model>[];
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await Promise.all(
+                [
+                    { name: 'abigail' },
+                    { name: 'betsy' },
+                    { name: 'catherine' },
+                    { name: 'deborah' },
+                ]
+                    .map(user => repository.create(model, user))
+            );
+            users = await repository.list(model);
+        });
+        test('*abc => `LIKE "%abc"`', async () => {
+            const q = 'ine';
+            const expectedResult = users
+                .filter(user => new RegExp(`.*${q}$`).test(user.name));
+            const result = await repository.list(model, { name: `*${q}` });
+            expect(result).toEqual(expectedResult);
+        });
+        test('abc* => `LIKE "abc%"`', async () => {
+            const q = 'abi';
+            const expectedResult = users
+                .filter(user => new RegExp(`^${q}.*`).test(user.name));
+            const result = await repository.list(model, { name: `${q}*` });
+            expect(result).toEqual(expectedResult);
+        });
+        test('*abc* => `LIKE "%abc%"`', async () => {
+            const q = 'bor';
+            const expectedResult = users
+                .filter(user => new RegExp(`.*${q}.*`).test(user.name));
+            const result = await repository.list(model, { name: `*${q}*` });
+            expect(result).toEqual(expectedResult);
+        });
     });
     describe('Pagination', () => {
         let knex: Knex;
