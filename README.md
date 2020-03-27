@@ -15,8 +15,17 @@
 
 ## TODO
 
-- Custom relation queries (e.g. in Bookshelf `this.hasMany().where(...)`)
-- Model serialization
+- [ ] Range queries
+- [ ] Like queries
+- [ ] Option typing
+- [ ] Custom relation queries (e.g. in Bookshelf `this.hasMany().where(...)`)
+- [ ] Pagination (limit/offset)
+- [ ] Cursor streaming
+- [x] Model serialization/deserialization
+
+### Discussion
+- [ ] Fetch all (fetchAll option)
+- [ ] Default pagination
 
 
 ## License
