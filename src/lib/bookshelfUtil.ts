@@ -222,12 +222,39 @@ const order = (options: any = {}): ((qb: QueryBuilder) => any) => {
         })
     };
 };
+
+const paginate = (() => {
+    const extractPagination = (options: any /* TODO Type */ = {}, defaultLimit = 10, defaultOffset = 0) => {
+        if ('count' in options || (!('limit' in options) && !('offset' in options))) {
+            return {
+                limit: undefined,
+                offset: undefined,
+            };
+        }
+        return {
+            limit: isNaN(parseInt(options.limit, 10)) ? defaultLimit : Number(options.limit),
+            offset: isNaN(parseInt(options.offset, 10)) ? defaultOffset : Number(options.offset),
+        };
+    };
+    return (options = {}) => {
+        const { limit, offset } = extractPagination(options);
+        return (qb: QueryBuilder) => {
+            if (limit !== undefined) {
+                qb.limit(limit);
+            }
+            if (offset !== undefined) {
+                qb.offset(offset);
+            }
+        };
+    };
+})();
+
 const queryModel = (source: ReturnType<typeof createModel>, queryParams?: any, options?: any) => {
     return source
         .query((qb: QueryBuilder) => {
             select(queryParams, options)(qb);
             count(options, source)(qb);
-            // paginate(options)(qb);
+            paginate(options)(qb);
             order(options)(qb);
         });
 };

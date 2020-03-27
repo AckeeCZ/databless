@@ -19,7 +19,7 @@
 - [ ] Like queries
 - [ ] Option typing
 - [ ] Custom relation queries (e.g. in Bookshelf `this.hasMany().where(...)`)
-- [ ] Pagination (limit/offset)
+- [x] Pagination (limit/offset)
 - [ ] Cursor streaming
 - [x] Model serialization/deserialization
 

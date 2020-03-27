@@ -47,7 +47,7 @@ const db = (() => {
             await knex.destroy();
             knex = undefined as any;
         }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
+        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: true });
         return knex as any;
     };
     const disconnect = async () => {
@@ -257,6 +257,51 @@ describe('Repository (Knex/Bookshelf)', () => {
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
             });
         })
+    });
+    describe('Pagination', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+            },
+        });
+        const data = '.'.repeat(100)
+            .split('')
+            .map((_, id) => ({ id }));
+
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            await Promise.all(
+                data.map((d) => repository.create(model, { id: d.id }))
+            );
+        });
+        test('No pagination by default', async () => {
+            const result = await repository.list(model);
+            expect(result.length).toEqual(data.length);
+        });
+        test('Limit', async () => {
+            const limit = 1;
+            const result = await repository.list(model, {}, { limit });
+            expect(result.length).toEqual(limit);
+        });
+        test('Offset', async () => {
+            const a = await repository.list(model, {});
+            const b = await repository.list(model, {}, { limit: 1, offset: 1 });
+            expect(a[1]).toMatchObject(b[0]);
+        });
+        test('offset=0 if missing and limit is set', async () => {
+            const a = await repository.list(model, {});
+            const b = await repository.list(model, {}, { limit: 10 });
+            expect(a[0]).toMatchObject(b[0]);
+        });
+        test('limit=10 if missing and offset is set', async () => {
+            const a = await repository.list(model);
+            const b = await repository.list(model, {}, { offset: 10 });
+            expect(a.slice(10, 20)).toMatchObject(b);
+        });
     });
     describe('model-hasOne', () => {
         let knex: Knex;
