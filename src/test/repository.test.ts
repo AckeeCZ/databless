@@ -96,7 +96,8 @@ describe('Repository (Knex/Bookshelf)', () => {
             `);
         });
         test('Create ignores columns not set in attributes', async () => {
-            const result = await repository.create(model, { nonExisting: 'stringValue' });
+            const data = { nonExisting: 'stringValue' } as Partial<repository.Model2Entity<typeof model>>;
+            const result = await repository.create(model, data);
             expect(result).toMatchInlineSnapshot(`
                 Object {
                   "id": 3,
