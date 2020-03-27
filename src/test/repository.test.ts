@@ -375,12 +375,12 @@ describe('Repository (Knex/Bookshelf)', () => {
             collectionName: 'accounts',
             attributes: {
                 id: { type: 'number' },
-                // users: {
-                //     type: 'relation',
-                //  TODO Circular reference. Dat a problem, bois!
-                //     targetModel: () => userModel,
-                //     relation: repository.bookshelfRelation.createBelongsToMany(),
-                // },
+                users: {
+                    type: 'relation',
+                    //  TODO Circular reference type problem. But works in JS
+                    targetModel: () => userModel,
+                    relation: repository.bookshelfRelation.createBelongsToMany(),
+                } as any,
             },
         });
         const userModel = repository.createModel({

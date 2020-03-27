@@ -93,7 +93,7 @@ const createModel = (options: ModelOptions) => {
                         },
                     }
                 } else {
-                    const target = attribute.value.targetModel().getBookshelfModel();
+                    const target = attribute.value.targetModel().getBookshelfModel(true);
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
@@ -112,7 +112,7 @@ const createModel = (options: ModelOptions) => {
                         },
                     }
                 } else {
-                    const target = attribute.value.targetModel().getBookshelfModel();
+                    const target = attribute.value.targetModel().getBookshelfModel(true);
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
@@ -131,7 +131,7 @@ const createModel = (options: ModelOptions) => {
                         },
                     };
                 } else {
-                    const target = attribute.value.targetModel().getBookshelfModel();
+                    const target = attribute.value.targetModel().getBookshelfModel(true);
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
@@ -155,7 +155,7 @@ const createModel = (options: ModelOptions) => {
                         },
                     };
                 } else {
-                    const target = attribute.value.targetModel().getBookshelfModel();
+                    const target = attribute.value.targetModel().getBookshelfModel(true);
                     acc = {
                         ...acc,
                         [attribute.name](this: any /* TODO Type */ ) {
