@@ -104,6 +104,45 @@ describe('Repository (Knex/Bookshelf)', () => {
             `);
         });
     });
+    describe('Property serialization', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                objectStoredAsJson: {
+                    type: 'string',
+                    serialize: x => JSON.stringify(x || null),
+                    deserialize: x => JSON.parse(x),
+                },
+            },
+        });
+        let record: repository.Model2Entity<typeof model>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            record = await repository.create(model, {});
+        });
+        test('Save undefined, get null', async () => {
+            const object = undefined;
+            await repository.update(model, { id: record.id }, { id: record.id, objectStoredAsJson: object });
+            const result = await repository.detail(model, { id: record.id });
+            expect(result.objectStoredAsJson).toEqual(null);
+        });
+        test('Save null, get null', async () => {
+            const object = null;
+            await repository.update(model, { id: record.id }, { id: record.id, objectStoredAsJson: object });
+            const result = await repository.detail(model, { id: record.id });
+            expect(result.objectStoredAsJson).toEqual(null);
+        });
+        test('Save object, get object', async () => {
+            const object = { foo: 'bar' };
+            await repository.update(model, { id: record.id }, { id: record.id, objectStoredAsJson: object });
+            const result = await repository.detail(model, { id: record.id });
+            expect(result.objectStoredAsJson).toMatchObject(object);
+        });
+    });
     describe('Single model update', () => {
         let knex: Knex;
         const model = repository.createModel({

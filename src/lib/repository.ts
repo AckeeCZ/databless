@@ -43,11 +43,14 @@ export interface Model<A extends Record<string, Attribute> = Record<string, Attr
     getBookshelfModel: () => any;
     attributeNames: string[];
     options: ModelOptions<A>;
+    deserialize: (object?: any) => any; // TODO Types
+    serialize: (object?: any) => any; // TODO Types
 }
 
 export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 
 export const create = async <A extends Record<string, Attribute>>(model: Model<A>, data: any /* TODO Type */, options?: any /* TODO Type */): Promise<Attributes2Entity<A>> => {
+    data = model.serialize(data);
     const result = await (model.getBookshelfModel().forge())
         .save(pick(data, model.attributeNames), options);
     return bookshelfUtil.serializer(options)(result);
@@ -56,7 +59,11 @@ export const create = async <A extends Record<string, Attribute>>(model: Model<A
 export const list = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: any, options?: any): Promise<Attributes2Entity<A>[]> => {
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetchAll(options);
-    return bookshelfUtil.serializer(options)(result);
+    if (options && options.count) {
+        return (bookshelfUtil.serializer(options)(result));
+    }
+    return (bookshelfUtil.serializer(options)(result))
+        .map(model.deserialize);
 };
 
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
@@ -64,7 +71,7 @@ export const detail = async <A extends Record<string, Attribute>>(model: Model<A
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetch(options);
-    return bookshelfUtil.serializer(options)(result);
+    return model.deserialize(bookshelfUtil.serializer(options)(result));
 };
 
 /**
@@ -79,9 +86,47 @@ export const update = async <A extends Record<string, Attribute>>(model: Model<A
     if (!data || isEmpty(data)) {
         return;
     }
+    data = model.serialize(data);
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
+};
+
+const createAttributesDeserializer = (options: ModelOptions) =>
+    createMapAttributes(
+        options,
+        attribute => (attribute as any /* TODO Type */).deserialize,
+        (value, name) => (options.attributes[name] as any /* TODO Type */).deserialize(value),
+    );
+
+const createAttributesSerializer = (options: ModelOptions) =>
+    createMapAttributes(
+        options,
+        attribute => (attribute as any /* TODO Type */).serialize,
+        (value, name) => (options.attributes[name] as any /* TODO Type */).serialize(value),
+    );
+
+const createMapAttributes = (
+    options: ModelOptions,
+    shouldMapAttribute: (attribute: Attribute) => boolean,
+    mapValue: (value: any, name: string) => any
+) => {
+    const fields = Array.from(Object.entries(options.attributes))
+        .filter(([, attribute]) => shouldMapAttribute(attribute))
+        .map(([key]) => key);
+    return (object?: any) => {
+        if (!object) {
+            return object;
+        }
+        const mapped = fields.reduce((acc, name) => {
+            acc[name] = mapValue(object[name], name);
+            return acc;
+        }, {} as any);
+        return {
+            ...object,
+            ...mapped,
+        };
+    };
 };
 
 export const createModel = <A extends Record<string, Attribute>>(options: ModelOptions<A>): Model<A> => {
@@ -91,5 +136,7 @@ export const createModel = <A extends Record<string, Attribute>>(options: ModelO
         options,
         getBookshelfModel,
         attributeNames,
+        deserialize: createAttributesDeserializer(options),
+        serialize: createAttributesSerializer(options),
     };
 };

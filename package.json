@@ -22,7 +22,7 @@
     "keywords": [],
     "scripts": {
         "build": "tsc",
-        "test": "jest --runInBand",
+        "test": "jest --runInBand --detectOpenHandles",
         "test:coverage": "npm run test -- --collectCoverage",
         "lint": "tslint -t codeFrame -p .",
         "prepare": "npm run build",
