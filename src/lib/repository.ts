@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { defaults, isEmpty, memoize, pick } from 'lodash';
+import { isEmpty, memoize, pick, defaults } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 import { SerializeOptions } from 'bookshelf';
 
@@ -51,15 +51,15 @@ export interface Model<A extends Record<string, Attribute> = Record<string, Attr
 
 export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 
-interface RepositoryMethodOptions {
+export interface RepositoryMethodOptions {
     toJSON?: SerializeOptions;
     qb?: bookshelfUtil.QbOption;
 }
-interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends RepositoryMethodOptions {
+export interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends RepositoryMethodOptions {
     // TODO: This type restricts using withRelated on transitive fields
     withRelated?: Attributes2RelationKeys<A>[];
 }
-interface RepositoryListOptions<A extends Record<string, Attribute>> extends RepositoryDetailOptions<A> {
+export interface RepositoryListOptions<A extends Record<string, Attribute>> extends RepositoryDetailOptions<A> {
     count?: true;
     order?: Attributes2NonRelationKeys<A> | Attributes2NonRelationKeys<A>[];
     limit?: number;
@@ -68,16 +68,14 @@ interface RepositoryListOptions<A extends Record<string, Attribute>> extends Rep
 
 type Filters<A extends Record<string, Attribute>> = Partial<{[key in keyof A]: Attribute2Type<A[key], A> | Attribute2Type<A[key], A>[]}>;
 
-type Create<A extends Record<string, Attribute>> = (model: Model<A>, data: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions) => Promise<Attributes2Entity<A>>;
-export const create = (<A extends Record<string, Attribute>>(): Create<A> => async (model, data, options) => {
+export const create = async <A extends Record<string, Attribute>>(model: Model<A>, data: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions): Promise<Attributes2Entity<A>> => {
     data = model.serialize(data);
     const result = await (model.getBookshelfModel().forge())
         .save(pick(data, model.attributeNames), options);
     return bookshelfUtil.serializer(options)(result);
-})();
+};
 
-type List<A extends Record<string, Attribute>> = (model: Model<A>, filter?: Filters<A>, options?: RepositoryListOptions<A>) => Promise<Attributes2Entity<A>[]>;
-export const list = (<A extends Record<string, Attribute>>(): List<A> => async (model, filter, options) => {
+export const list = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryListOptions<A>): Promise<Attributes2Entity<A>[]> => {
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetchAll(options);
     if (options?.count) {
@@ -85,14 +83,15 @@ export const list = (<A extends Record<string, Attribute>>(): List<A> => async (
     }
     return (bookshelfUtil.serializer(options)(result))
         .map(model.deserialize);
-})();
+};
 
-type Detail<A extends Record<string, Attribute>> = (model: Model<A>, filter?: Filters<A>, options?: RepositoryListOptions<A>) => Promise<Attributes2Entity<A>>;
-export const detail = (<A extends Record<string, Attribute>>(): Detail<A> => async (model, filter, options) => {
+// TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
+export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A>> => {
+    // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetch(options);
     return model.deserialize(bookshelfUtil.serializer(options)(result));
-})();
+};
 
 /**
  * Return value may vary on driver
@@ -101,8 +100,7 @@ export const detail = (<A extends Record<string, Attribute>>(): Detail<A> => asy
  * @param data 
  * @param options 
  */
-type Update<A extends Record<string, Attribute>> = (model: Model<A>, filter?: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions) => Promise<Attributes2Entity<A> | undefined>;
-export const update = (<A extends Record<string, Attribute>>(): Update<A> => async (model, filter, data, options = {}) => {
+export const update = async <A extends Record<string, Attribute>>(model: Model<A>, filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}): Promise<Attributes2Entity<A> | undefined> => {
     // TODO `defaultPagination` from master
     if (!data || isEmpty(data)) {
         return;
@@ -111,13 +109,12 @@ export const update = (<A extends Record<string, Attribute>>(): Update<A> => asy
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
-})();
+};
 
-type Delete<A extends Record<string, Attribute>> = (model: Model<A>, filter?: Filters<A>, options?: RepositoryMethodOptions) => Promise<unknown>;
-const remove = (<A extends Record<string, Attribute>>(): Delete<A> => async (model, filter, options = {}) => {
+const remove = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryMethodOptions): Promise<unknown> => {
     return bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .destroy(defaults({ require: false }, options));
-})();
+};
 export { remove as delete }
 
 const createAttributesDeserializer = (options: ModelOptions) =>
@@ -255,10 +252,10 @@ export const createModel = <A extends Record<string, Attribute>>(options: ModelO
 
 export const createRepository = <A extends Record<string, Attribute>>(model: Model<A>) => {
     return {
-        create: (create as any as Create<A>).bind(null, model),
-        update: (update as any as Update<A>).bind(null, model),
-        list: (list as any as List<A>).bind(null, model),
-        delete: (remove as any as Delete<A>).bind(null, model),
-        detail: (detail as any as Detail<A>).bind(null, model),
+        create: (data: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions) => create(model, data, options),
+        list: (filter?: Filters<A>, options?: RepositoryListOptions<A>) => list(model, filter, options),
+        detail: (filter?: Filters<A>, options?: RepositoryDetailOptions<A>) => detail(model, filter, options),
+        update: (filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
+        delete: (filter?: Filters<A>, options?: RepositoryMethodOptions) => remove(model, filter, options),
     };
 };
