@@ -23,6 +23,7 @@
 - [x] Pagination (limit/offset)
 - [ ] Cursor streaming
 - [x] Model serialization/deserialization
+- [ ] (docs) knex-stringgify doesnt work on sqlite in memory
 
 ### Discussion
 - [ ] Fetch all (fetchAll option)
