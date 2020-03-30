@@ -88,16 +88,14 @@ export const list = (<A extends Record<string, Attribute>>(): List<A> => async (
 })();
 
 type Detail<A extends Record<string, Attribute>> = (model: Model<A>, filter?: Filters<A>, options?: RepositoryListOptions<A>) => Promise<Attributes2Entity<A>>;
-// TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
 export const detail = (<A extends Record<string, Attribute>>(): Detail<A> => async (model, filter, options) => {
-    // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetch(options);
     return model.deserialize(bookshelfUtil.serializer(options)(result));
 })();
 
 /**
- * Return value may vary on
+ * Return value may vary on driver
  * @param model 
  * @param filter 
  * @param data 
@@ -109,7 +107,7 @@ export const update = (<A extends Record<string, Attribute>>(): Update<A> => asy
     if (!data || isEmpty(data)) {
         return;
     }
-    data = model.serialize(data);
+    data = model.serialize(pick(data, model.attributeNames));
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
@@ -261,5 +259,6 @@ export const createRepository = <A extends Record<string, Attribute>>(model: Mod
         update: (update as any as Update<A>).bind(null, model),
         list: (list as any as List<A>).bind(null, model),
         delete: (remove as any as Delete<A>).bind(null, model),
+        detail: (detail as any as Detail<A>).bind(null, model),
     };
 };
