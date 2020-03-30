@@ -51,15 +51,15 @@ export interface Model<A extends Record<string, Attribute> = Record<string, Attr
 
 export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 
-interface RepositoryMethodOptions {
+export interface RepositoryMethodOptions {
     toJSON?: SerializeOptions;
     qb?: bookshelfUtil.QbOption;
 }
-interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends RepositoryMethodOptions {
+export interface RepositoryDetailOptions<A extends Record<string, Attribute>> extends RepositoryMethodOptions {
     // TODO: This type restricts using withRelated on transitive fields
     withRelated?: Attributes2RelationKeys<A>[];
 }
-interface RepositoryListOptions<A extends Record<string, Attribute>> extends RepositoryDetailOptions<A> {
+export interface RepositoryListOptions<A extends Record<string, Attribute>> extends RepositoryDetailOptions<A> {
     count?: true;
     order?: Attributes2NonRelationKeys<A> | Attributes2NonRelationKeys<A>[];
     limit?: number;
