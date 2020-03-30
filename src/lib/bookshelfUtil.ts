@@ -175,28 +175,6 @@ const serializer = (options = {} as any) =>
         }
         return result;
     };
-// TODO Refactor
-const snakelize = (obj: any) => {
-    if (isString(obj)) {
-        return snakeCase(obj);
-    }
-    if (isArray(obj) === true) {
-        const out: any[] = [];
-        obj.forEach((item: any) => {
-            out.push(exports.snakelize(item));
-        });
-        return out;
-    }
-    if (!obj || !isObject(obj)) {
-        return obj;
-    }
-    const out = {};
-    Object.keys(obj).forEach(key => {
-        // @ts-ignore
-        out[snakeCase(key)] = obj[key];
-    });
-    return out;
-};
 
 const wildcards = (() => {
     const queryToSqlLike = (query: WildcardQuery): string => {
@@ -275,9 +253,9 @@ const select = (queryParams: any = {}, options: any = {}) => {
         [queryParams, options] = rangeQueries(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
         const primitiveQueryParams = pickBy(queryParams, negate(isArray));
-        qb.where(snakelize(primitiveQueryParams));
+        qb.where(primitiveQueryParams);
         forEach(arrayQueryParams, (value, field) => {
-            qb.whereIn(snakelize(field), value);
+            qb.whereIn(field, value);
         });
         if (options.qb) {
             options.qb(qb);
