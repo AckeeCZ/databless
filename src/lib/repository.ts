@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { isEmpty, memoize, pick } from 'lodash';
+import { isEmpty, memoize, pick, defaults } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 import { SerializeOptions } from 'bookshelf';
 
@@ -100,7 +100,7 @@ export const detail = async <A extends Record<string, Attribute>>(model: Model<A
  * @param data 
  * @param options 
  */
-export const update = async <A extends Record<string, Attribute>>(model: Model<A>, filter: Partial<Model2Entity<Model<A>>>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}): Promise<Attributes2Entity<A> | undefined> => {
+export const update = async <A extends Record<string, Attribute>>(model: Model<A>, filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}): Promise<Attributes2Entity<A> | undefined> => {
     // TODO `defaultPagination` from master
     if (!data || isEmpty(data)) {
         return;
@@ -110,6 +110,12 @@ export const update = async <A extends Record<string, Attribute>>(model: Model<A
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
 };
+
+const remove = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryMethodOptions): Promise<unknown> => {
+    return bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+        .destroy(defaults({ require: false }, options));
+};
+export { remove as delete }
 
 const createAttributesDeserializer = (options: ModelOptions) =>
     createMapAttributes(
@@ -241,5 +247,15 @@ export const createModel = <A extends Record<string, Attribute>>(options: ModelO
         attributeNames,
         deserialize: createAttributesDeserializer(options),
         serialize: createAttributesSerializer(options),
+    };
+};
+
+export const createRepository = <A extends Record<string, Attribute>>(model: Model<A>) => {
+    return {
+        create: (data: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions) => create(model, data, options),
+        list: (filter?: Filters<A>, options?: RepositoryListOptions<A>) => list(model, filter, options),
+        detail: (filter?: Filters<A>, options?: RepositoryDetailOptions<A>) => detail(model, filter, options),
+        update: (filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
+        delete: (filter?: Filters<A>, options?: RepositoryMethodOptions) => remove(model, filter, options),
     };
 };
