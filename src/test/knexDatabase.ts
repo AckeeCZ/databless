@@ -67,7 +67,7 @@ const db = (dbOptions: { knexStringcase?: any, debug?: boolean } = {}) => {
             const database = (mysql.connection as any).database;
             delete (mysql.connection as any).database;
             knex = connect(opts);
-            await knex.raw(`DROP DATABASE \`${database}\``);
+            await knex.raw(`DROP DATABASE \`${database}\``).catch(() => {});
             await knex.raw(`CREATE DATABASE \`${database}\``);
             await knex.destroy();
             (mysql.connection as any).database = database;
