@@ -1,64 +1,8 @@
 import { default as connect, default as Knex } from 'knex';
 import * as repository from '../lib/repository';
+import createDatabase from './knexDatabase';
 
-const db = (() => {
-    let knex: ReturnType<typeof connect>;
-
-    /**
-     * Dummy migration runner for a model
-     * - PRIMARY KEY - attribute `id` is always set as BigInt Primary key
-     * @param model repository.Model
-     */
-    const createTable = async (model: repository.Model) => {
-        // TODO Cast needed, model.options is any
-        const modelOptions = model.options;
-        await knex.schema.createTable(modelOptions.collectionName, table => {
-            Array.from(Object.entries(modelOptions.attributes)).forEach(([name, attribute]) => {
-                if (name === 'id') {
-                    table.bigIncrements(name).primary();
-                    return;
-                }
-                switch (attribute.type) {
-                    case 'string':
-                        table.string(name);
-                        break;
-                    case 'bool':
-                        table.boolean(name);
-                        break;
-                    case 'date':
-                        table.dateTime(name);
-                        break;
-                    case 'number':
-                        table.decimal(name);
-                        break;
-                    case 'object':
-                        table.jsonb(name);
-                        break;
-                    case 'relation':
-                        break;
-                    default:
-                        throw new TypeError('Invalid type');
-                }
-            });
-        });
-    };
-    const reset = async (): Promise<Knex> => {
-        if (knex) {
-            await knex.destroy();
-            knex = undefined as any;
-        }
-        knex = connect({ client: 'sqlite3', connection: ':memory:', pool: { min: 1, max: 1 }, debug: false });
-        return knex as any;
-    };
-    const disconnect = async () => {
-        await knex.destroy();
-    };
-    return {
-        reset,
-        disconnect,
-        createTable,
-    };
-})();
+const db = createDatabase();
 
 describe('Repository (Knex/Bookshelf)', () => {
     afterAll(async () => {
