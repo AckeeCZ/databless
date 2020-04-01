@@ -404,7 +404,7 @@ describe('Repository (Knex/Bookshelf)', () => {
         });
         const data = '.'.repeat(100)
             .split('')
-            .map((_, id) => ({ id }));
+            .map((_, i) => ({ id: i + 1 }));
 
         beforeAll(async () => {
             knex = await db.reset();
