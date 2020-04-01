@@ -5,12 +5,13 @@
  */
 import Knex from 'knex';
 import { omit } from 'lodash';
-import { v1 as uuid } from 'uuid';
+import { v1 as uuidv1 } from 'uuid';
 import * as repository from '../lib/repository';
 import createDatabase from './knexDatabase';
 const knexStringcase = require('knex-stringcase');
 
 describe('🚗', () => {
+    const uuid = () => uuidv1().replace(/-/g, '');
     const db = createDatabase({ knexStringcase, debug: false });
     let knex: Knex;
     enum UserRole {
