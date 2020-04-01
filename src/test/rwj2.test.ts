@@ -4,14 +4,12 @@
  */
 
 import Knex from 'knex';
-import { omit } from 'lodash';
-import { v1 as uuid } from 'uuid';
 import * as repository from '../lib/repository';
 import createDatabase from './knexDatabase';
 const knexStringcase = require('knex-stringcase');
 
 describe('🚚', () => {
-    const db = createDatabase({ knexStringcase, debug: false });
+    const db = createDatabase({ /* knexStringcase , */ debug: false });
     let knex: Knex;
     enum TourState {
         Active = 'active',
@@ -36,7 +34,8 @@ describe('🚚', () => {
                 type: 'relation',
                 targetModel: () => Tour,
                 relation: repository.bookshelfRelation.createBelongsToMany({
-                    query: tours => tours.through(TourVehicle.getBookshelfModel())
+                    otherKey: 'tourId',
+                    query: tours => tours.through(TourVehicle.getBookshelfModel(), 'tourId', 'vehicleId')
                         .query(qb => {
                             qb.where('tours.state', TourState.Active);
                             qb.orderBy('id', 'desc');
@@ -47,6 +46,7 @@ describe('🚚', () => {
                 type: 'relation',
                 targetModel: () => Ping,
                 relation: repository.bookshelfRelation.createHasMany({
+                    foreignKey: 'tourId',
                     query: pings => pings
                         .query((qb) => {
                             qb.leftJoin('tours', 'vehiclePings.tourId', 'tours.id')
@@ -160,12 +160,12 @@ describe('🚚', () => {
 
             const activeTours = (await Vehicles.detail({ id: vehicle.id }, { withRelated: ['activeTours'] })).activeTours;
             // TODO: Is empty! SQL query seems ok.. problem with snakecase BS pairing?
-            // expect(activeTours[0].id).toEqual(tours.find(x => x.state === TourState.Active));
+            expect(activeTours).toEqual(tours.filter(x => x.state === TourState.Active));
         }
         {
             const activeTourPings = (await Vehicles.detail({ id: vehicle.id }, { withRelated: ['activeTourPings' ]})).activeTourPings;
             // TODO: Is empty! SQL query seems ok.. problem with snakecase BS pairing?
-            // expect(activeTourPings).toMatchObject(pings.filter(x => !!tours.find(tour => (tour.state === TourState.Active && tour.id === x.tourId))));
+            expect(activeTourPings).toMatchObject(pings.filter(x => !!tours.find(tour => (tour.state === TourState.Active && tour.id === x.tourId))));
         }
     });
 });
