@@ -58,7 +58,7 @@ const db = (dbOptions: { knexStringcase?: any, debug?: boolean } = {}) => {
             user: 'root',
             server: 'localhost',
             database: resetOpts.database,
-            password: 'root',
+            password: '',
         }, pool: { min: 1, max: 1 }, debug: dbOptions.debug };
 
         const driver = mysql;

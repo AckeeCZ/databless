@@ -6,6 +6,8 @@ node_js:
   - "12"
 script:
   - npm run test
+services:
+  - mysql
 deploy:
   provider: npm
   skip-cleanup: true
