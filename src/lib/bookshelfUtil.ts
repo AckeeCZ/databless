@@ -326,7 +326,32 @@ const queryModel = (source: ReturnType<typeof createModel>, queryParams?: any, o
         });
 };
 
+/**
+ * Prevents Bookshelf's pivot-prefixed (PIVOT_PREFIX) attributes _pivot_abc  to be camelcased to `pivotAbc`
+ * so that BS can pair back relation attributes.
+ *
+ * TODO: Only works for camelcase. Ignores passed `appStringCase`. For modifying such behaviour, I suggest
+ * copy+paste+modify accordingly.
+ * @param stringcase
+ */
+const patchStringcaseForBookshelf = (stringcase: any) => {
+    return (knexOptions: any = {}) => {
+        const pivotPrefix = require('bookshelf/lib/constants').PIVOT_PREFIX;
+        const re = new RegExp(`^${pivotPrefix}`);
+        return stringcase({
+            ...knexOptions,
+            appStringcase: (key: string) => {
+                if (!re.test(key)) {
+                    return key;
+                }
+                return pivotPrefix + require('stringcase').camelcase(key.replace(re, ''));
+            },
+        });
+    };
+};
+
 export {
+    patchStringcaseForBookshelf,
     createModel,
     bookshelfRelation,
     serializer,

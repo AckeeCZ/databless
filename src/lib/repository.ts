@@ -50,6 +50,7 @@ export interface Model<A extends Record<string, Attribute> = Record<string, Attr
 }
 
 export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
+export const patchStringcaseForBookshelf = bookshelfUtil.patchStringcaseForBookshelf;
 
 export interface RepositoryMethodOptions {
     toJSON?: SerializeOptions;
