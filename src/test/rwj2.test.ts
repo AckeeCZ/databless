@@ -9,7 +9,7 @@ import createDatabase from './knexDatabase';
 const knexStringcase = require('knex-stringcase');
 
 describe('🚚', () => {
-    const db = createDatabase({ /* knexStringcase , */ debug: false });
+    const db = createDatabase({ knexStringcase: repository.patchStringcaseForBookshelf(knexStringcase), debug: false });
     let knex: Knex;
     enum TourState {
         Active = 'active',
@@ -34,6 +34,7 @@ describe('🚚', () => {
                 type: 'relation',
                 targetModel: () => Tour,
                 relation: repository.bookshelfRelation.createBelongsToMany({
+                    foreignKey: 'vehicleId',
                     otherKey: 'tourId',
                     query: tours => tours.through(TourVehicle.getBookshelfModel(), 'tourId', 'vehicleId')
                         .query(qb => {
