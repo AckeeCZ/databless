@@ -5,9 +5,9 @@ import * as fs from 'fs';
 
 const db = (dbOptions: { knexStringcase?: any, debug?: boolean } = {}) => {
     let knex: ReturnType<typeof connect>;
-    // if (!dbOptions.knexStringcase) {
-    //     dbOptions.knexStringcase = (x: any) => x;
-    // }
+    if (!dbOptions.knexStringcase) {
+        dbOptions.knexStringcase = (x: any) => x;
+    }
 
     /**
      * Dummy migration runner for a model
