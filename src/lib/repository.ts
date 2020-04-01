@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import * as Knex from 'knex';
 import { isEmpty, memoize, pick, defaults } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 import { SerializeOptions } from 'bookshelf';

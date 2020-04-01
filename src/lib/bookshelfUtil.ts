@@ -1,4 +1,4 @@
-import Bookshelf, { Model } from 'bookshelf';
+import * as Bookshelf from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
 import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase } from 'lodash';
 import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery } from './repository';
