@@ -2,7 +2,7 @@ import { default as connect, default as Knex } from 'knex';
 import * as repository from '../lib/repository';
 import createDatabase from './knexDatabase';
 
-const db = createDatabase();
+const db = createDatabase({ debug: false });
 
 describe('Repository (Knex/Bookshelf)', () => {
     afterAll(async () => {
@@ -86,6 +86,29 @@ describe('Repository (Knex/Bookshelf)', () => {
             await repository.update(model, { id: record.id }, { id: record.id, objectStoredAsJson: object });
             const result = await repository.detail(model, { id: record.id });
             expect(result.objectStoredAsJson).toMatchObject(object);
+        });
+    });
+    describe('Delete', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' }
+            },
+        });
+        let record: repository.Model2Entity<typeof model>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            record = await repository.create(model, {});
+        });
+        test('Delete where', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.delete(model, { id: record.id }, {});
+            const after = await repository.detail(model, { id: record.id });
+            expect(before).not.toEqual(null)
+            expect(after).toEqual(null)
         });
     });
     describe('Single model update', () => {
