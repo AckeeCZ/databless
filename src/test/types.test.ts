@@ -47,6 +47,9 @@ const catModel = repository.createModel({
     },
     collectionName: 'cats',
 });
+const catRepository = repository.createRepository(catModel);
+const listReturn = catRepository.list({}, {});
+const countReturn = catRepository.list({}, { count: true });
 type Cat = repository.Model2Entity<typeof catModel>;
 type Relations = repository.Model2RelationKeys<typeof catModel>
 `);
@@ -59,17 +62,27 @@ describe('Model types', () => {
         expect(inspectType(`Cat['jsonCat']`)).toMatchInlineSnapshot(`"{ id?: string | undefined; name: string; }"`);
     });
     test('toOne and toMany relation work as expected', () => {
-        expect(inspectType(`Cat['whisker']`)).toBe(inspectType(`Cat['whiskers'][0]`))
+        expect(inspectType(`Cat['whisker']`)).toBe(inspectType(`Cat['whiskers'][0]`));
         expect(inspectType(`Cat['whisker']`)).toMatchInlineSnapshot(
             `"{ length: number; color: string; cat_id: number; }"`
         );
     });
     test('toOne and toMany reflexive relation work as expected', () => {
-        expect(inspectType(`Cat`)).toBe(inspectType(`Cat['mother']`))
+        expect(inspectType(`Cat`)).toBe(inspectType(`Cat['mother']`));
     });
     test('Can retrieve keys for relation attributes', () => {
         expect(inspectType('Relations')).toMatchInlineSnapshot(
             `"\\"whiskers\\" | \\"whisker\\" | \\"mother\\" | \\"mothers\\""`
         );
+    });
+    test('List with and without count has correct return type', () => {
+        // List returns list of cats
+        expect(
+            inspectType(
+                `(typeof listReturn) extends Promise<(infer X)[]> ? X extends Record<'name', any> ? X['name'] : never : never`
+            )
+        ).toMatchInlineSnapshot(`"string"`);
+        // List with count returns number
+        expect(inspectType('typeof countReturn')).toMatchInlineSnapshot(`"Promise<number>"`);
     });
 });

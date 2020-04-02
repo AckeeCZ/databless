@@ -76,7 +76,7 @@ export const create = async <A extends Record<string, Attribute>>(model: Model<A
     return bookshelfUtil.serializer(options)(result);
 };
 
-export const list = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryListOptions<A>): Promise<Attributes2Entity<A>[]> => {
+export const list = async <A extends Record<string, Attribute>, O extends RepositoryListOptions<A>>(model: Model<A>, filter?: Filters<A>, options?: O): Promise<O['count'] extends true ? number : Attributes2Entity<A>[]> => {
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .fetchAll(options);
     if (options?.count) {
@@ -254,7 +254,7 @@ export const createModel = <A extends Record<string, Attribute>>(options: ModelO
 export const createRepository = <A extends Record<string, Attribute>>(model: Model<A>) => {
     return {
         create: (data: Partial<Model2Entity<Model<A>>>, options?: RepositoryMethodOptions) => create(model, data, options),
-        list: (filter?: Filters<A>, options?: RepositoryListOptions<A>) => list(model, filter, options),
+        list: <O extends RepositoryListOptions<A>>(filter?: Filters<A>, options?: O) => list(model, filter, options),
         detail: (filter?: Filters<A>, options?: RepositoryDetailOptions<A>) => detail(model, filter, options),
         update: (filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
         delete: (filter?: Filters<A>, options?: RepositoryMethodOptions) => remove(model, filter, options),
