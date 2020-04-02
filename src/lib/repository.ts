@@ -24,9 +24,9 @@ type Attribute2Type<P, S = never> = P extends AttributeRelation ? AttributeRelat
 type PrimitiveAttribute = { type: Primitive, serialize?: (x: any) => PrimitiveToType<Primitive>, deserialize?: (x: any) => any };
 type Attribute = AttributeRelation | PrimitiveAttribute;
 export type Relation = { collection: boolean }
-export type AttributeRelation<A extends Record<string, PrimitiveAttribute> = Record<string, PrimitiveAttribute>, R extends Relation = any> = {
+export type AttributeRelation<R extends Relation = any> = {
     type: 'relation'
-    targetModel: (() => Model<A>) | 'self'
+    targetModel: (() => Model<any>) | 'self'
     relation: R
 }
 export type Attributes2Entity<A extends Record<string, Attribute>> = { [key in keyof A]: A[key] extends Attribute ? Attribute2Type<A[key], A> : never };

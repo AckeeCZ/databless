@@ -92,7 +92,7 @@ const createModel = (options: ModelOptions) => {
             name: key,
             value: options.attributes[key],
         }))
-        .filter((x): x is { name: string, value: AttributeRelation<any, BookshelfRelation> } => x.value.type === 'relation')
+        .filter((x): x is { name: string, value: AttributeRelation<BookshelfRelation> } => x.value.type === 'relation')
         .reduce((acc, attribute) => {
             const target = attribute.value.targetModel === 'self'
                 ? () => model
