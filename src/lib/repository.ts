@@ -90,7 +90,7 @@ export const list = async <A extends Record<string, Attribute>, O extends Reposi
 export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A>> => {
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
-        .fetch(options);
+        .fetch(defaults({ require: false }, options));
     return model.deserialize(bookshelfUtil.serializer(options)(result));
 };
 
