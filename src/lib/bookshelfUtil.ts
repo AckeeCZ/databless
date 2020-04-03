@@ -1,7 +1,7 @@
 import * as Bookshelf from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
-import { forEach, isArray, isObject, isString, negate, omit, pickBy, snakeCase } from 'lodash';
-import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery } from './repository';
+import { forEach, isArray, isObject, isString, negate, omit, pickBy, mapKeys } from 'lodash';
+import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery, Model } from './repository';
 
 type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
 
@@ -316,16 +316,23 @@ const paginate = (() => {
     };
 })();
 
-const queryModel = (source: ReturnType<typeof createModel>, queryParams?: any, options?: any) => {
-    return source
-        .query((qb: QueryBuilder) => {
-            select(queryParams, options)(qb);
-            count(options, source)(qb);
-            paginate(options)(qb);
-            order(options)(qb);
-        });
+const queryModel = (model: Model<any>, queryParams?: any, options?: any) => {
+    const filters = queryParams
+        ? Object.keys(queryParams)
+              .filter(f => model.attributeNames.includes(f))
+              .reduce((acc, f) => {
+                  acc[`${model.options.collectionName}.${f}`] = queryParams[f];
+                  return acc;
+              }, {} as any)
+        : {};
+    const source = model.getBookshelfModel();
+    return source.query((qb: QueryBuilder) => {
+        select(filters, options)(qb);
+        count(options, source)(qb);
+        paginate(options)(qb);
+        order(options)(qb);
+    });
 };
-
 /**
  * Prevents Bookshelf's pivot-prefixed (PIVOT_PREFIX) attributes _pivot_abc  to be camelcased to `pivotAbc`
  * so that BS can pair back relation attributes.

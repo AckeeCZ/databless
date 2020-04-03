@@ -77,7 +77,7 @@ export const create = async <A extends Record<string, Attribute>>(model: Model<A
 };
 
 export const list = async <A extends Record<string, Attribute>, O extends RepositoryListOptions<A>>(model: Model<A>, filter?: Filters<A>, options?: O): Promise<O['count'] extends true ? number : Attributes2Entity<A>[]> => {
-    const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+    const result = await bookshelfUtil.queryModel(model, filter, options)
         .fetchAll(options);
     if (options?.count) {
         return (bookshelfUtil.serializer(options)(result));
@@ -89,7 +89,7 @@ export const list = async <A extends Record<string, Attribute>, O extends Reposi
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
 export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A>> => {
     // TODO DB Limit 1
-    const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+    const result = await bookshelfUtil.queryModel(model, filter, options)
         .fetch(defaults({ require: false }, options));
     return model.deserialize(bookshelfUtil.serializer(options)(result));
 };
@@ -107,7 +107,7 @@ export const update = async <A extends Record<string, Attribute>>(model: Model<A
         return;
     }
     data = model.serialize(pick(data, model.attributeNames));
-    const result = await bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+    const result = await bookshelfUtil.queryModel(model, filter, options)
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
 };
@@ -123,7 +123,7 @@ const remove = async <A extends Record<string, Attribute>>(model: Model<A>, filt
             },
         };
     }
-    return bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
+    return bookshelfUtil.queryModel(model, filter, options)
         .destroy(defaults({ require: false }, options));
 };
 export { remove as delete }
