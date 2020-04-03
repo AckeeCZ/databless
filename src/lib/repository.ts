@@ -113,6 +113,16 @@ export const update = async <A extends Record<string, Attribute>>(model: Model<A
 };
 
 const remove = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryMethodOptions): Promise<unknown> => {
+    if (!filter || isEmpty(filter)) {
+        const optionQb = (options?.qb) || (x => x);
+        options = {
+            ...options,
+            qb: (qb) => {
+                qb.whereRaw('1 = 1');
+                optionQb(qb);
+            },
+        };
+    }
     return bookshelfUtil.queryModel(model.getBookshelfModel(), filter, options)
         .destroy(defaults({ require: false }, options));
 };

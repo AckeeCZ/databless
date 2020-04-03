@@ -90,16 +90,17 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Delete', () => {
         let knex: Knex;
-        const model = repository.createModel({
-            adapter: () => knex,
-            collectionName: 'model',
-            attributes: {
-                id: { type: 'number' }
-            },
-        });
+        let model: repository.Model<any>;
         let record: repository.Model2Entity<typeof model>;
-        beforeAll(async () => {
+        beforeEach(async () => {
             knex = await db.reset();
+            model = repository.createModel({
+                adapter: () => knex,
+                collectionName: 'model',
+                attributes: {
+                    id: { type: 'number' },
+                },
+            });
             await db.createTable(model);
             record = await repository.create(model, {});
         });
@@ -107,8 +108,15 @@ describe('Repository (Knex/Bookshelf)', () => {
             const before = await repository.detail(model, { id: record.id });
             await repository.delete(model, { id: record.id }, {});
             const after = await repository.detail(model, { id: record.id });
-            expect(before).not.toEqual(null)
-            expect(after).toEqual(null)
+            expect(before).not.toEqual(null);
+            expect(after).toEqual(null);
+        });
+        test('Delete all', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.delete(model, {});
+            const after = await repository.detail(model, { id: record.id });
+            expect(before).not.toEqual(null);
+            expect(after).toEqual(null);
         });
     });
     describe('Single model update', () => {

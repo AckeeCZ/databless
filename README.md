@@ -23,7 +23,7 @@
 - `.update(filters, data, options)`
     - updates a record based on filters with given data
 - `.delete(filters, options)`
-    - deletes records based on filters
+    - deletes records based on filters (if empty, deletes all)
 
 - 🧙 Databless uses Bookshelf for underlying models, and even though Databless should be enough for most of the times, refer Bookshelf documentation for options if necessary, as they are passed to [save](https://bookshelfjs.org/api.html#Model-instance-save)/[fetch](https://bookshelfjs.org/api.html#Model-instance-fetch)/[fetchAll](https://bookshelfjs.org/api.html#Model-instance-fetchAll)/[destroy](https://bookshelfjs.org/api.html#Model-instance-destroy) metods as options.
 
@@ -208,6 +208,7 @@
 ### Discussion
 - [ ] Fetch all (fetchAll option)
 - [ ] Default pagination
+- [ ] Bug: Knex connection reuse (if a adapter getter fn value changes, its never used)
 
 
 ## License
