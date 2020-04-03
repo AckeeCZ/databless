@@ -193,6 +193,10 @@ describe('Repository (Knex/Bookshelf)', () => {
                 expect(filter.string).toContain(result.string);
             });
         });
+        test('Uknown filter does not fail', async () => {
+            const filter: any = { foo: 'bar' };
+            await repository.list(model, filter);
+        });
         test('Count using filters', async () => {
             const filter = { number: 10, string: 'hijklmn' };
             const result = await repository.list(model, filter, { count: true });
