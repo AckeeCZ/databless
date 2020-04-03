@@ -140,6 +140,17 @@
     // SELECT ... ORDER BY foo ASC, baz DESC 
     ```
 
+## Pagination
+
+- via `options.limit` and `options.offset`
+- if either of `limit` or `offset` is defined, the other is filled with defaults (defaults: limit=10, offset=0)
+
+    ```js
+    { limit: 10, offset: 0 }
+    // SELECT ... LIMIT 10 OFFSET 0
+    ```
+
+
 ## Relations
 
 ### Define a relation
