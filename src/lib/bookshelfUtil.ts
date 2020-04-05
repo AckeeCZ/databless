@@ -272,7 +272,7 @@ const count = (options: any = {}, model: ReturnType<typeof createModel>) => {
     };
 };
 
-const order = (options: any = {}): ((qb: QueryBuilder) => any) => {
+const order = (options: any = {}, validFields: string[]): ((qb: QueryBuilder) => any) => {
     // Skip for missing order, skip for count
     if (!options.order || options.count) return () => {};
     options.order = (typeof options.order === 'string') ? [options.order] : options.order;
@@ -282,7 +282,7 @@ const order = (options: any = {}): ((qb: QueryBuilder) => any) => {
         if (matches === null) return { columnName: order, order: 'ASC' };
         const [, sign, columnName] = matches;
         return { columnName, order: sign === '-' ? 'DESC' : 'ASC' }
-    })
+    }).filter(def => validFields.includes(def.columnName))
     return qb => {
         orderDefs.forEach(x => {
             qb.orderBy(x.columnName, x.order);
@@ -330,7 +330,7 @@ const queryModel = (model: Model<any>, queryParams?: any, options?: any) => {
         select(filters, options)(qb);
         count(options, source)(qb);
         paginate(options)(qb);
-        order(options)(qb);
+        order(options, model.attributeNames)(qb);
     });
 };
 /**

@@ -242,6 +242,9 @@ describe('Repository (Knex/Bookshelf)', () => {
                 const result = await repository.list(model, {}, { order: ['-number' as any, 'string'] });
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
             });
+            test('Order by invalid key is ignored', async () => {
+                await repository.list(model, {}, { order: 'whoppity-whoppity-invalid-property' as any });
+            });
         })
     });
     describe('Inequality filtering', () => {
