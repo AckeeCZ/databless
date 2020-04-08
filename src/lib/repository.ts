@@ -277,5 +277,6 @@ export const createRepository = <A extends Record<string, Attribute>>(model: Mod
         detail: (filter?: Filters<A>, options?: RepositoryDetailOptions<A>) => detail(model, filter, options),
         update: (filter: Filters<A>, data?: Partial<Model2Entity<Model<A>>>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
         delete: (filter?: Filters<A>, options?: RepositoryMethodOptions) => remove(model, filter, options),
+        createBulk: (dataItems: Array<Partial<Model2Entity<Model<A>>>>, options?: RepositoryMethodOptions) => createBulk(model, dataItems, options),
     };
 };
