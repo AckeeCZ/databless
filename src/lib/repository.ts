@@ -96,11 +96,11 @@ export const list = async <A extends Record<string, Attribute>, O extends Reposi
 };
 
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
-export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A>> => {
+export const detail = async <A extends Record<string, Attribute>>(model: Model<A>, filter?: Filters<A>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A> | undefined> => {
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model, filter, options)
         .fetch(defaults({ require: false }, options));
-    return model.deserialize(bookshelfUtil.serializer(options)(result));
+    return model.deserialize(bookshelfUtil.serializer(options)(result)) || undefined;
 };
 
 /**
