@@ -16,6 +16,7 @@
 # TL;DR manual
 - `.create(data, options)`
     - creates new record with given data
+    - for optimized batch create use `bulkCreate(data[], options)`
 - `.detail(filters, options)`
     - gets a single record based on filters
 - `.list(filters, options)`
@@ -59,6 +60,9 @@
         deserialize: x => JSON.parse(x),
     }
     ```
+- bulk create
+    - via `bulkCreate(data[], options)`
+    - uses [knex Batch insert](http://knexjs.org/#Utility-BatchInsert)
 
 ## Repository
 

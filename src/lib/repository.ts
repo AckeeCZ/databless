@@ -76,6 +76,15 @@ export const create = async <A extends Record<string, Attribute>>(model: Model<A
     return bookshelfUtil.serializer(options)(result);
 };
 
+export const createBulk = async <A extends Record<string, Attribute>>(model: Model<A>, data: Array<Partial<Model2Entity<Model<A>>>>, options?: RepositoryMethodOptions): Promise<unknown> => {
+    return model.options.adapter().batchInsert(
+        model.options.collectionName,
+        data.map(dataItem => model.serialize(dataItem))
+        // TODO Support transactions using .transacting(trx)
+        // TODO Add timestamps if bsModel.hasTimestamps
+    );
+};
+
 export const list = async <A extends Record<string, Attribute>, O extends RepositoryListOptions<A>>(model: Model<A>, filter?: Filters<A>, options?: O): Promise<O['count'] extends true ? number : Attributes2Entity<A>[]> => {
     const result = await bookshelfUtil.queryModel(model, filter, options)
         .fetchAll(options);
