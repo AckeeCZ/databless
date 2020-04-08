@@ -49,6 +49,45 @@ describe('Repository (Knex/Bookshelf)', () => {
             `);
         });
     });
+    describe('Repository', () => {
+        let knex: Knex;
+        const model = repository.createModel({
+            adapter: () => knex,
+            collectionName: 'model',
+            attributes: {
+                id: { type: 'number' },
+                string: { type: 'string' },
+            },
+        });
+        let repo: ReturnType<typeof repository.createRepository>;
+        beforeAll(async () => {
+            knex = await db.reset();
+            await db.createTable(model);
+            // TODO Type. This is ok, but `repo` type above cannot be made with ReturnType (looses generics)
+            repo = repository.createRepository(model as any);
+        });
+        it('create', async () => {
+            await repo.create({});
+        });
+        it('update', async () => {
+            const created = await repository.create(model, {});
+            await repo.update({ id: created.id }, { string: `updated(${created.string})` });
+        });
+        it('delete', async () => {
+            const created = await repository.create(model, {});
+            await repo.delete({ id: created.id });
+        });
+        it('list', async () => {
+            await repo.list();
+        });
+        it('detail', async () => {
+            const created = await repository.create(model, {});
+            await repo.detail({ id: created.id });
+        });
+        it('createBulk', async () => {
+            await repo.createBulk([{}]);
+        });
+    });
     describe('Property serialization', () => {
         let knex: Knex;
         const model = repository.createModel({
