@@ -183,38 +183,6 @@ describe('Repository (Knex/Bookshelf)', () => {
                 inputData.map(data => repository.create(model, data))
             );
         });
-        test('No params means no filtering', async () => {
-            const result = await repository.list(model);
-            expect(result.length).toEqual(inputData.length);
-        });
-        test('Exact match filtering', async () => {
-            const filter = { number: 10, string: 'hijklmn' };
-            const results = await repository.list(model, filter);
-            results.forEach(result => {
-                expect(result).toMatchObject(filter);
-            });
-        });
-        test('Where in filtering', async () => {
-            const filter = { string: ['hijklmn', 'abcdefg'] };
-            const results = await repository.list(model, filter);
-            results.forEach(result => {
-                expect(filter.string).toContain(result.string);
-            });
-        });
-        test('Uknown filter does not fail', async () => {
-            const filter: any = { foo: 'bar' };
-            await repository.list(model, filter);
-        });
-        test('Count using filters', async () => {
-            const filter = { number: 10, string: 'hijklmn' };
-            const result = await repository.list(model, filter, { count: true });
-            expect(result).toEqual(
-                inputData
-                    .filter(data => (data.number === filter.number))
-                    .filter(data => (data.string === filter.string))
-                    .length
-            );
-        });
         describe('Order', () => {
             const byProp = (prop: string) => (a: any, b: any) => (typeof a === 'string' ? a.localeCompare(b) : a[prop] - b[prop]);
             const omitId = (a: any) => { const {id, ...rest} = a; return rest };
