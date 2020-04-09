@@ -208,6 +208,8 @@
 - [ ] Cursor streaming
 - [x] Model serialization/deserialization
 - [ ] (docs) knex-stringgify doesnt work on sqlite in memory
+- [ ] `withRelated` should be optional
+- [ ] `withRelated` shouldn't be available for update/create
 
 ### Discussion
 - [ ] Fetch all (fetchAll option)
