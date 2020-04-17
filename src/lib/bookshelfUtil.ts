@@ -1,7 +1,7 @@
 import * as Bookshelf from 'bookshelf';
 import Knex, { QueryBuilder } from 'knex';
-import { forEach, isArray, isObject, isString, negate, omit, pickBy, mapKeys } from 'lodash';
-import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery, Model } from './repository';
+import { forEach, isArray, isObject, isString, negate, omit, pickBy, mapKeys, keys, pick, entries } from 'lodash';
+import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery, Model, CustomFilters } from './repository';
 
 type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
 
@@ -316,17 +316,25 @@ const paginate = (() => {
     };
 })();
 
+const applyCustomFilters = (customFilters?: CustomFilters, queryParams?: any, options?: any) => {
+    const relevantCustomFns = pick(customFilters || {}, keys(queryParams));
+    entries(relevantCustomFns).forEach(([key, val]) => {
+        val(queryParams[key], options);
+    })
+}
+
 const queryModel = (model: Model<any>, queryParams?: any, options?: any) => {
-    const filters = queryParams
-        ? Object.keys(queryParams)
-              .filter(f => model.attributeNames.includes(f))
-              .reduce((acc, f) => {
-                  acc[`${model.options.collectionName}.${f}`] = queryParams[f];
-                  return acc;
-              }, {} as any)
-        : {};
+    options = options || {};
+    queryParams = queryParams || {};
+    const filters = keys(queryParams)
+        .filter(f => model.attributeNames.includes(f))
+        .reduce((acc, f) => {
+            acc[`${model.options.collectionName}.${f}`] = queryParams[f];
+            return acc;
+        }, {} as any);
     const source = model.getBookshelfModel();
     return source.query((qb: QueryBuilder) => {
+        applyCustomFilters(model.options.filters, queryParams, options);
         select(filters, options)(qb);
         count(options, source)(qb);
         paginate(options)(qb);
@@ -357,10 +365,19 @@ const patchStringcaseForBookshelf = (stringcase: any) => {
     };
 };
 
+const composeQb = (qbOption: QbOption | undefined, fn: QbOption): QbOption => {
+    const lastQb = qbOption;
+    return (qb) => {
+        if (lastQb) lastQb(qb);
+        fn(qb);
+    };
+};
+
 export {
     patchStringcaseForBookshelf,
     createModel,
     bookshelfRelation,
     serializer,
     queryModel,
+    composeQb,
 };
