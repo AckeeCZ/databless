@@ -147,15 +147,15 @@ describe('Repository (Knex/Bookshelf)', () => {
             const before = await repository.detail(model, { id: record.id });
             await repository.delete(model, { id: record.id }, {});
             const after = await repository.detail(model, { id: record.id });
-            expect(before).not.toEqual(null);
-            expect(after).toEqual(null);
+            expect(before).toBeTruthy();
+            expect(after).toEqual(undefined);
         });
         test('Delete all', async () => {
             const before = await repository.detail(model, { id: record.id });
             await repository.delete(model, {});
             const after = await repository.detail(model, { id: record.id });
-            expect(before).not.toEqual(null);
-            expect(after).toEqual(null);
+            expect(before).toBeTruthy();
+            expect(after).toEqual(undefined);
         });
     });
     describe('Single model update', () => {
