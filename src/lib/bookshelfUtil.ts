@@ -212,13 +212,13 @@ const rangeQueries = (() => {
     const queryToSqlCompare = (query: RangeQuery) => {
         switch (true) {
             case !!query.range.gt:
-                return ['>', query.range.gt] as const;
+                return ['>', query.range.gt!] as const;
             case !!query.range.gte:
-                return ['>=', query.range.gte] as const;
+                return ['>=', query.range.gte!] as const;
             case !!query.range.lt:
-                return ['<', query.range.lt] as const;
+                return ['<', query.range.lt!] as const;
             case !!query.range.lte:
-                return ['<=', query.range.lte] as const;
+                return ['<=', query.range.lte!] as const;
             default:
                 throw new Error('Cannot convert Range query to SQL');
         }
