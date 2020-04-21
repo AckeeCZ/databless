@@ -109,6 +109,22 @@
     { qb: (qb: Knex.QueryBuilder) => qb.whereRaw('...') }
     // SELECT WHERE ...
     ```
+- custom model filters
+    - via `Model.filters` and `filters`
+    - allows you to use additional filters in `filters` (apart from Model.attributes)
+    - define in `Model.filters` first, use in `filters` second
+    - ⚠️ Don't use this to overwrite any of the default Model.attribute filters, only add _new_ filters
+    ```js
+    // Simplified example for brevity
+    Model({
+        attributes: { /* */ },
+        filters: { myAwesomeFilter: (value, options) => {/* */} }
+    })
+    
+    detail({ myAwesomeFilter: awesomeValue })
+    ```
+
+
 ## Counting
 
 - via `options.count`

@@ -6,7 +6,7 @@ import { composeQb } from '../lib/bookshelfUtil';
 
 const db = createDatabase({ debug: false });
 
-describe('Custom filters', () => {
+describe('Custom model filters', () => {
     let knex: Knex;
     const model = repository.createModel({
         adapter: () => knex,
