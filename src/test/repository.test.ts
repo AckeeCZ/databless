@@ -130,7 +130,8 @@ describe('Repository (Knex/Bookshelf)', () => {
     describe('Delete', () => {
         let knex: Knex;
         let model: repository.Model<any>;
-        let record: repository.Model2Entity<typeof model>;
+        let record1: repository.Model2Entity<typeof model>;
+        let record2: repository.Model2Entity<typeof model>;
         beforeEach(async () => {
             knex = await db.reset();
             model = repository.createModel({
@@ -141,19 +142,22 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             });
             await db.createTable(model);
-            record = await repository.create(model, {});
+            record1 = await repository.create(model, {});
+            record2 = await repository.create(model, {});
         });
         test('Delete where', async () => {
-            const before = await repository.detail(model, { id: record.id });
-            await repository.delete(model, { id: record.id }, {});
-            const after = await repository.detail(model, { id: record.id });
-            expect(before).toBeTruthy();
-            expect(after).toEqual(undefined);
+            const before1 = await repository.detail(model, { id: record1.id });
+            await repository.delete(model, { id: record1.id }, {});
+            const after1 = await repository.detail(model, { id: record1.id });
+            const after2 = await repository.detail(model, { id: record2.id });
+            expect(before1).toBeTruthy();
+            expect(after1).toEqual(undefined);
+            expect(after2).toBeTruthy();
         });
         test('Delete all', async () => {
-            const before = await repository.detail(model, { id: record.id });
+            const before = await repository.detail(model, { id: record2.id });
             await repository.delete(model, {});
-            const after = await repository.detail(model, { id: record.id });
+            const after = await repository.detail(model, { id: record2.id });
             expect(before).toBeTruthy();
             expect(after).toEqual(undefined);
         });

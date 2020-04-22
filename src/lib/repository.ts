@@ -126,6 +126,7 @@ export const update = async <A extends Attributes, CF extends CustomFilters>(mod
 };
 
 const remove = async <A extends Attributes, CF extends CustomFilters>(model: Model<A, CF>, filter?: Filters<A, CF>, options?: RepositoryMethodOptions): Promise<unknown> => {
+    // TODO: check there is no typo in filters
     if (!filter || isEmpty(filter)) {
         const optionQb = (options?.qb) || (x => x);
         options = {
