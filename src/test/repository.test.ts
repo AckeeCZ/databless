@@ -489,45 +489,51 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('model-hasOne', () => {
         let knex: Knex;
-        const relatedModel = repository.createModel({
+        const HealthRecord = repository.createModel({
             adapter: () => knex,
-            collectionName: 'related_model',
+            collectionName: 'health_records',
             attributes: {
                 id: { type: 'number' },
-                model_id: { type: 'number' },
+                patient_id: { type: 'number' },
             },
         });
-        const model = repository.createModel({
+        const Patient = repository.createModel({
             adapter: () => knex,
-            collectionName: 'model',
+            collectionName: 'patients',
             attributes: {
                 id: { type: 'number' },
-                hasOneRelationReflexive: {
+                clone_of_id: { type: 'number' },
+                clone: {
                     type: 'relation',
                     targetModel: 'self',
                     relation: repository.bookshelfRelation.createHasOne({
-                        foreignKey: 'id',
+                        foreignKey: 'clone_of_id',
                     }),
                 },
-                hasOneRelation: {
+                healthRecord: {
                     type: 'relation',
-                    targetModel: () => relatedModel,
+                    targetModel: () => HealthRecord,
                     relation: repository.bookshelfRelation.createHasOne(),
                 },
             },
         });
+        let patient: repository.Model2Entity<typeof Patient>;
+        let patient2: repository.Model2Entity<typeof Patient>;
         beforeAll(async () => {
             knex = await db.reset();
-            await db.createTable(model);
-            await db.createTable(relatedModel);
-            const modelRecord = await repository.create(model, {});
-            await repository.create(relatedModel, { model_id: modelRecord.id });
+            await db.createTable(Patient);
+            await db.createTable(HealthRecord);
+            patient = await repository.create(Patient, {});
+            patient2 = await repository.create(Patient, { clone_of_id: patient.id });
+            await repository.create(HealthRecord, { patient_id: patient.id });
+            await repository.create(HealthRecord, { patient_id: patient2.id });
         });
         test('Default fetch is without relations', async () => {
-            const results = await repository.list(model);
+            const results = await repository.list(Patient);
             expect(results.length).toBeGreaterThan(0);
             results.forEach(result => {
-                expect(result.hasOneRelation).toEqual(undefined);
+                expect(result.healthRecord).toEqual(undefined);
+                expect(result.clone).toEqual(undefined);
             });
         });
 
@@ -535,19 +541,24 @@ describe('Repository (Knex/Bookshelf)', () => {
         // attribute over bookshelf.prototype.hasOne
 
         test('Fetch with related model', async () => {
-            const results = await repository.list(model, {}, { withRelated: ['hasOneRelation'] });
-            const relatedEntity = (await repository.list(relatedModel))[0];
-            expect(results.length).toBeGreaterThan(0);
-            results.forEach(result => {
-                expect(result.hasOneRelation.id).toEqual(relatedEntity.id);
+            const patients = await repository.list(Patient, {}, { withRelated: ['healthRecord'] });
+            const healthRecords = await repository.list(HealthRecord);
+            expect(patients.length).toBeGreaterThan(0);
+            patients.forEach(result => {
+                const healthRecord = healthRecords.find(hc => hc.patient_id === result.id)!;
+                expect(result.healthRecord.id).toEqual(healthRecord.id);
             });
         });
 
         test('Fetch with related model (reflexive)', async () => {
-            const results = await repository.list(model, {}, { withRelated: ['hasOneRelationReflexive'] });
-            expect(results.length).toBeGreaterThan(0);
-            results.forEach(result => {
-                expect(result.hasOneRelationReflexive.id).toEqual(result.id);
+            const results = await repository.list(Patient, {}, { withRelated: ['clone'] });
+            expect(results.find(x => x.id === patient.id)!).toMatchObject({
+                clone_of_id: null,
+                clone: patient2,
+            });
+            expect(results.find(x => x.id === patient2.id)!).toMatchObject({
+                clone_of_id: patient.id,
+                clone: {},
             });
         });
     });
