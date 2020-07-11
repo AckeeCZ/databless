@@ -25,7 +25,7 @@ describe('Bulk create', () => {
         });
         beforeEach(async () => {
             await repository.delete(model);
-        })
+        });
         test('Create n elements', async () => {
             const data: Array<Partial<repository.Model2Entity<typeof model>>> = [
                 { string: 'a' },
@@ -43,6 +43,19 @@ describe('Bulk create', () => {
             await repository.createBulk(model, data);
             const list = await repository.list(model);
             expect(list).toMatchObject(data.map(d => pick(d, model.attributeNames)));
+        });
+        test('Create elements with undefined fields are ignored', async () => {
+            const data: Array<Partial<repository.Model2Entity<typeof model>>> = [{ string: undefined }];
+            await repository.createBulk(model, data);
+            const list = await repository.list(model);
+            expect(list).toMatchInlineSnapshot(`
+                Array [
+                  Object {
+                    "id": 5,
+                    "string": null,
+                  },
+                ]
+            `);
         });
     });
 });

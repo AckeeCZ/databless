@@ -1,6 +1,6 @@
 import { SerializeOptions } from 'bookshelf';
 import * as Knex from 'knex';
-import { defaults, flow, isEmpty, memoize, pick } from 'lodash';
+import { defaults, flow, isEmpty, memoize, pick, omitBy } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
@@ -90,7 +90,7 @@ export const createBulk = async <A extends Attributes, CF extends CustomFilters>
 };
 
 export const list = async <A extends Attributes, CF extends CustomFilters, O extends RepositoryListOptions<A>>(model: Model<A, CF>, filter?: Filters<A, CF>, options?: O): Promise<O['count'] extends true ? number : Attributes2Entity<A>[]> => {
-    const result = await bookshelfUtil.queryModel(model, filter, options)
+    const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options)
         .fetchAll(options);
     if (options?.count) {
         return (bookshelfUtil.serializer(options)(result));
@@ -102,7 +102,7 @@ export const list = async <A extends Attributes, CF extends CustomFilters, O ext
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
 export const detail = async <A extends Attributes, CF extends CustomFilters>(model: Model<A, CF>, filter?: Filters<A, CF>, options?: RepositoryDetailOptions<A>): Promise<Attributes2Entity<A>> => {
     // TODO DB Limit 1
-    const result = await bookshelfUtil.queryModel(model, filter, options)
+    const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options)
         .fetch(defaults({ require: false }, options));
     return model.deserialize(bookshelfUtil.serializer(options)(result)) || undefined;
 };
@@ -116,10 +116,10 @@ export const detail = async <A extends Attributes, CF extends CustomFilters>(mod
  */
 export const update = async <A extends Attributes, CF extends CustomFilters>(model: Model<A, CF>, filter: Filters<A, CF>, data?: Partial<Model2Entity<Model<A, CF>>>, options: RepositoryMethodOptions = {}): Promise<Attributes2Entity<A> | undefined> => {
     // TODO `defaultPagination` from master
+    data = model.serialize(pick(data, model.attributeNames));
     if (!data || isEmpty(data)) {
         return;
     }
-    data = model.serialize(pick(data, model.attributeNames));
     const result = await bookshelfUtil.queryModel(model, filter, options)
         .save(data, { require: false, method: 'update', ...options });
     return bookshelfUtil.serializer(options)(result);
@@ -149,6 +149,15 @@ const createAttributesFilter = (options: ModelOptions) => {
             return object;
         }
         return pick(object, attributes);
+    };
+};
+
+const createEmptyFilter = () => {
+    return (object?: any) => {
+        if (!object) {
+            return object;
+        }
+        return omitBy(object, value => (value === undefined));
     };
 };
 
@@ -281,7 +290,7 @@ export const createModel = <A extends Attributes, CF extends CustomFilters>(opti
         getBookshelfModel,
         attributeNames,
         deserialize: createAttributesDeserializer(options),
-        serialize: flow(createAttributesSerializer(options), createAttributesFilter(options)),
+        serialize: flow(createEmptyFilter(), createAttributesSerializer(options), createAttributesFilter(options)),
     };
 };
 

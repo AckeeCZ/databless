@@ -63,4 +63,14 @@ describe('Exact match filter', () => {
         const result = await repository.detail(model, { string: 'nonexistingstringihope', stringX: '' });
         expect(result).toEqual(undefined);
     });
+    test('Filtering undefined fields are ignored', async () => {
+        {
+            const result = await repository.detail(model, { string: 'hijklmn', number: undefined });
+            expect(result.string).toEqual('hijklmn');
+        }
+        {
+            const result = await repository.list(model, { string: 'hijklmn', number: undefined });
+            expect(result[0].string).toEqual('hijklmn');
+        }
+    });
 });

@@ -161,6 +161,14 @@ describe('Repository (Knex/Bookshelf)', () => {
             expect(before).toBeTruthy();
             expect(after).toEqual(undefined);
         });
+        test('Accidental delete-all throws an error', async () => {
+            try {
+                await repository.delete(model, { id: undefined });
+            } catch (error) {
+                return;
+            }
+            throw new Error('Should throw an error');
+        });
     });
     describe('Single model update', () => {
         let knex: Knex;
