@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
-import { isEmpty, memoize, pick, defaults } from 'lodash';
-import * as bookshelfUtil from './bookshelfUtil';
 import { SerializeOptions } from 'bookshelf';
+import * as Knex from 'knex';
+import { defaults, flow, isEmpty, memoize, pick } from 'lodash';
+import * as bookshelfUtil from './bookshelfUtil';
 
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
 type PrimitiveToType<P> = P extends 'string' ? string : P extends 'date' ? Date : P extends 'number' ? number : P extends 'bool' ? boolean : P extends 'object' ? any : never;
@@ -140,7 +140,17 @@ const remove = async <A extends Attributes, CF extends CustomFilters>(model: Mod
     return bookshelfUtil.queryModel(model, filter, options)
         .destroy(defaults({ require: false }, options));
 };
-export { remove as delete }
+export { remove as delete };
+
+const createAttributesFilter = (options: ModelOptions) => {
+    const attributes = Object.keys(options.attributes);
+    return (object?: any) => {
+        if (!object) {
+            return object;
+        }
+        return pick(object, attributes);
+    };
+};
 
 const createAttributesDeserializer = (options: ModelOptions) =>
     createMapAttributes(
@@ -271,7 +281,7 @@ export const createModel = <A extends Attributes, CF extends CustomFilters>(opti
         getBookshelfModel,
         attributeNames,
         deserialize: createAttributesDeserializer(options),
-        serialize: createAttributesSerializer(options),
+        serialize: flow(createAttributesSerializer(options), createAttributesFilter(options)),
     };
 };
 

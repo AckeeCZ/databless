@@ -197,6 +197,12 @@ describe('Repository (Knex/Bookshelf)', () => {
             const after = await repository.detail(model, { id: record.id });
             expect(after).toMatchObject({ ...before, string: 'stringupdated', string2: 'string2updated' });
         });
+        test('Update ignores attributes not defined on the model', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.update(model, { id: record.id }, { string: 'stringupdated', string2: 'string2updated', stringX: 'x' } as any);
+            const after = await repository.detail(model, { id: record.id });
+            expect(after).toMatchObject({ ...before, string: 'stringupdated', string2: 'string2updated' });
+        });
     });
     describe('Single model read', () => {
         let knex: Knex;

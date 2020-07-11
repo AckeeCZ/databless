@@ -59,4 +59,8 @@ describe('Exact match filter', () => {
         const result = await repository.detail(model, { string: 'nonexistingstringihope' });
         expect(result).toEqual(undefined);
     });
+    test('Filters on model-undefined attributes are ignored', async () => {
+        const result = await repository.detail(model, { string: 'nonexistingstringihope', stringX: '' });
+        expect(result).toEqual(undefined);
+    });
 });
