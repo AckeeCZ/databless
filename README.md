@@ -233,6 +233,20 @@
 - [ ] Bug: Knex connection reuse (if a adapter getter fn value changes, its never used)
 
 
+## Test
+
+You can create database via docker-compose
+
+```
+sudo docker-compose -f docker-compose/docker-compose.yml up
+```
+
+and run the tests
+```
+npm t
+```
+
+
 ## License
 
 This project is licensed under [MIT](./LICENSE).
