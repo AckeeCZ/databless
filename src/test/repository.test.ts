@@ -203,6 +203,12 @@ describe('Repository (Knex/Bookshelf)', () => {
             const after = await repository.detail(model, { id: record.id });
             expect(after).toMatchObject({ ...before, string: 'stringupdated', string2: 'string2updated' });
         });
+        test('Update ignores undefined values', async () => {
+            const before = await repository.detail(model, { id: record.id });
+            await repository.update(model, { id: record.id }, { string: undefined });
+            const after = await repository.detail(model, { id: record.id });
+            expect(after).toMatchObject(before);
+        });
     });
     describe('Single model read', () => {
         let knex: Knex;
@@ -228,17 +234,19 @@ describe('Repository (Knex/Bookshelf)', () => {
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
-            await Promise.all(
-                inputData.map(data => repository.create(model, data))
-            );
+            await Promise.all(inputData.map(data => repository.create(model, data)));
         });
         describe('Order', () => {
-            const byProp = (prop: string) => (a: any, b: any) => (typeof a === 'string' ? a.localeCompare(b) : a[prop] - b[prop]);
-            const omitId = (a: any) => { const {id, ...rest} = a; return rest };
+            const byProp = (prop: string) => (a: any, b: any) =>
+                typeof a === 'string' ? a.localeCompare(b) : a[prop] - b[prop];
+            const omitId = (a: any) => {
+                const { id, ...rest } = a;
+                return rest;
+            };
             test('Order string', async () => {
                 const result = await repository.list(model, {}, { order: 'string' });
                 const resultPlus = await repository.list(model, {}, { order: '+string' as any });
-                expect(result).toStrictEqual(resultPlus)
+                expect(result).toStrictEqual(resultPlus);
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('string')));
             });
             test('Order -string', async () => {
@@ -248,7 +256,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             test('Order number', async () => {
                 const result = await repository.list(model, {}, { order: 'number' });
                 const resultPlus = await repository.list(model, {}, { order: '+number' as any });
-                expect(result).toStrictEqual(resultPlus)
+                expect(result).toStrictEqual(resultPlus);
                 expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')));
             });
             test('Order -number', async () => {
@@ -257,12 +265,17 @@ describe('Repository (Knex/Bookshelf)', () => {
             });
             test('Order by multiple', async () => {
                 const result = await repository.list(model, {}, { order: ['-number' as any, 'string'] });
-                expect(result.map(omitId)).toStrictEqual([...inputData].sort(byProp('number')).reverse().sort(byProp('string')));
+                expect(result.map(omitId)).toStrictEqual(
+                    [...inputData]
+                        .sort(byProp('number'))
+                        .reverse()
+                        .sort(byProp('string'))
+                );
             });
             test('Order by invalid key is ignored', async () => {
                 await repository.list(model, {}, { order: 'whoppity-whoppity-invalid-property' as any });
             });
-        })
+        });
     });
     describe('Inequality filtering', () => {
         let knex: Knex;
@@ -285,36 +298,31 @@ describe('Repository (Knex/Bookshelf)', () => {
                     { name: 'betsy', notAge: 2 },
                     { name: 'catherine', notAge: 3 },
                     { name: 'deborah', notAge: 4 },
-                ]
-                    .map(user => repository.create(model, user))
+                ].map(user => repository.create(model, user))
             );
             users = await repository.list(model);
         });
         it('`Greater than ({ age: ">1" }` => `age > "1"`)', async () => {
             const threshold = 2;
-            const expectedResult = users
-                .filter(user => user.notAge > threshold);
+            const expectedResult = users.filter(user => user.notAge > threshold);
             const result = await repository.list(model, { notAge: `>${threshold}` as any /* TODO Type. Oops. */ });
             expect(result).toEqual(expectedResult);
         });
         it('`Greater or equal than ({ age: ">=1" }` => `age >= "1"`)', async () => {
             const threshold = 2;
-            const expectedResult = users
-                .filter(user => user.notAge >= threshold);
+            const expectedResult = users.filter(user => user.notAge >= threshold);
             const result = await repository.list(model, { notAge: `>=${threshold}` as any /* TODO Type. Oops. */ });
             expect(result).toEqual(expectedResult);
         });
         it('`Less than ({ age: "<1" }` => `age < "1"`)', async () => {
             const threshold = 2;
-            const expectedResult = users
-                .filter(user => user.notAge < threshold);
+            const expectedResult = users.filter(user => user.notAge < threshold);
             const result = await repository.list(model, { notAge: `<${threshold}` as any /* TODO Type. Oops. */ });
             expect(result).toEqual(expectedResult);
         });
         it('`Less or equal than ({ age: "<=1" }` => `age <= "1"`)', async () => {
             const threshold = 2;
-            const expectedResult = users
-                .filter(user => user.notAge <= threshold);
+            const expectedResult = users.filter(user => user.notAge <= threshold);
             const result = await repository.list(model, { notAge: `<=${threshold}` as any /* TODO Type. Oops. */ });
             expect(result).toEqual(expectedResult);
         });
@@ -334,34 +342,27 @@ describe('Repository (Knex/Bookshelf)', () => {
             knex = await db.reset();
             await db.createTable(model);
             await Promise.all(
-                [
-                    { name: 'abigail' },
-                    { name: 'betsy' },
-                    { name: 'catherine' },
-                    { name: 'deborah' },
-                ]
-                    .map(user => repository.create(model, user))
+                [{ name: 'abigail' }, { name: 'betsy' }, { name: 'catherine' }, { name: 'deborah' }].map(user =>
+                    repository.create(model, user)
+                )
             );
             users = await repository.list(model);
         });
         test('*abc => `LIKE "%abc"`', async () => {
             const q = 'ine';
-            const expectedResult = users
-                .filter(user => new RegExp(`.*${q}$`).test(user.name));
+            const expectedResult = users.filter(user => new RegExp(`.*${q}$`).test(user.name));
             const result = await repository.list(model, { name: `*${q}` });
             expect(result).toEqual(expectedResult);
         });
         test('abc* => `LIKE "abc%"`', async () => {
             const q = 'abi';
-            const expectedResult = users
-                .filter(user => new RegExp(`^${q}.*`).test(user.name));
+            const expectedResult = users.filter(user => new RegExp(`^${q}.*`).test(user.name));
             const result = await repository.list(model, { name: `${q}*` });
             expect(result).toEqual(expectedResult);
         });
         test('*abc* => `LIKE "%abc%"`', async () => {
             const q = 'bor';
-            const expectedResult = users
-                .filter(user => new RegExp(`.*${q}.*`).test(user.name));
+            const expectedResult = users.filter(user => new RegExp(`.*${q}.*`).test(user.name));
             const result = await repository.list(model, { name: `*${q}*` });
             expect(result).toEqual(expectedResult);
         });
@@ -381,23 +382,24 @@ describe('Repository (Knex/Bookshelf)', () => {
             knex = await db.reset();
             await db.createTable(model);
             await Promise.all(
-                [
-                    { name: 'abigail' },
-                    { name: 'betsy' },
-                    { name: 'catherine' },
-                    { name: 'deborah' },
-                ]
-                    .map(user => repository.create(model, user))
+                [{ name: 'abigail' }, { name: 'betsy' }, { name: 'catherine' }, { name: 'deborah' }].map(user =>
+                    repository.create(model, user)
+                )
             );
             users = await repository.list(model);
         });
         test('Custom filtering option`', async () => {
             const threshold = 6;
-            const expectedResult = users
-                .filter(user => user.name.length > threshold);
-            const result = await repository.list(model, {}, { qb: qb => {
-                qb.whereRaw(`LENGTH(name) > ${threshold}`);
-            }});
+            const expectedResult = users.filter(user => user.name.length > threshold);
+            const result = await repository.list(
+                model,
+                {},
+                {
+                    qb: qb => {
+                        qb.whereRaw(`LENGTH(name) > ${threshold}`);
+                    },
+                }
+            );
             expect(result).toEqual(expectedResult);
         });
     });
@@ -422,7 +424,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                     type: 'relation',
                     targetModel: () => bookModel,
                     relation: repository.bookshelfRelation.createHasMany({
-                        query: (books) => books.where({ type: 'programming' }, false),
+                        query: books => books.where({ type: 'programming' }, false),
                     }),
                 },
             },
@@ -442,8 +444,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             books = await repository.list(bookModel);
         });
         it('x', async () => {
-            const expectedResult = books
-                .filter(book =>  book.type === 'programming');
+            const expectedResult = books.filter(book => book.type === 'programming');
             const result = await repository.detail(authorModel, { id: author.id }, { withRelated: ['books'] });
             expect(result.books).toEqual(expectedResult);
         });
@@ -457,16 +458,15 @@ describe('Repository (Knex/Bookshelf)', () => {
                 id: { type: 'number' },
             },
         });
-        const data = '.'.repeat(100)
+        const data = '.'
+            .repeat(100)
             .split('')
             .map((_, i) => ({ id: i + 1 }));
 
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
-            await Promise.all(
-                data.map((d) => repository.create(model, { id: d.id }))
-            );
+            await Promise.all(data.map(d => repository.create(model, { id: d.id })));
         });
         test('No pagination by default', async () => {
             const result = await repository.list(model);
@@ -612,24 +612,28 @@ describe('Repository (Knex/Bookshelf)', () => {
             ]);
         });
         test('Fetch with related models', async () => {
-            const result = await repository.detail(model, { id: motherRecord.id }, { withRelated: ['hasManyRelation'] });
-            expect(result.hasManyRelation.length)
-                .toBeGreaterThanOrEqual(1);
-            result.hasManyRelation
-                .forEach(relation => {
-                    expect(relation.id).toBeDefined();
-                    expect(relation.model_id).toEqual(result.id);
-                });
+            const result = await repository.detail(
+                model,
+                { id: motherRecord.id },
+                { withRelated: ['hasManyRelation'] }
+            );
+            expect(result.hasManyRelation.length).toBeGreaterThanOrEqual(1);
+            result.hasManyRelation.forEach(relation => {
+                expect(relation.id).toBeDefined();
+                expect(relation.model_id).toEqual(result.id);
+            });
         });
         test('Fetch with related models (reflexive)', async () => {
-            const result = await repository.detail(model, { id: motherRecord.id }, { withRelated: ['hasManyRelationReflexive'] });
-            expect(result.hasManyRelationReflexive.length)
-                .toBeGreaterThanOrEqual(1);
-            result.hasManyRelationReflexive
-                .forEach(relation => {
-                    expect(relation.id).toBeDefined();
-                    expect(relation.model_id).toEqual(result.id);
-                });
+            const result = await repository.detail(
+                model,
+                { id: motherRecord.id },
+                { withRelated: ['hasManyRelationReflexive'] }
+            );
+            expect(result.hasManyRelationReflexive.length).toBeGreaterThanOrEqual(1);
+            result.hasManyRelationReflexive.forEach(relation => {
+                expect(relation.id).toBeDefined();
+                expect(relation.model_id).toEqual(result.id);
+            });
         });
     });
     describe('model-belongsTo', () => {
@@ -749,11 +753,11 @@ describe('Repository (Knex/Bookshelf)', () => {
             betsy = await repository.create(userModel, {});
             abigailsAccount1 = await repository.create(accountModel, {});
             abigailsAccount2 = await repository.create(accountModel, {});
-            await Promise.all([
-                [abigail, abigailsAccount1],
-                [abigail, abigailsAccount2],
-            ]
-                .map(([user, account]) =>
+            await Promise.all(
+                [
+                    [abigail, abigailsAccount1],
+                    [abigail, abigailsAccount2],
+                ].map(([user, account]) =>
                     repository.create(usersAccountsModel, { user_id: user.id, account_id: account.id })
                 )
             );
@@ -761,17 +765,15 @@ describe('Repository (Knex/Bookshelf)', () => {
         });
         test('Fetch with related models', async () => {
             const result = await repository.detail(userModel, { id: abigail.id }, { withRelated: ['accounts'] });
-            [abigailsAccount1, abigailsAccount2]
-                .forEach(account => {
-                    expect(!!result.accounts.find(acc => acc.id === account.id)).toEqual(true);
-                });
+            [abigailsAccount1, abigailsAccount2].forEach(account => {
+                expect(!!result.accounts.find(acc => acc.id === account.id)).toEqual(true);
+            });
         });
         test('Fetch with related models (reflexive', async () => {
             const result = await repository.detail(userModel, { id: abigail.id }, { withRelated: ['friends'] });
-            [betsy]
-                .forEach(user => {
-                    expect(!!result.friends.find(friend => friend.id === user.id)).toEqual(true);
-                });
+            [betsy].forEach(user => {
+                expect(!!result.friends.find(friend => friend.id === user.id)).toEqual(true);
+            });
         });
     });
 });
