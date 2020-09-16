@@ -1,0 +1,26 @@
+version: '3'
+services:
+  postgres1:
+    image: postgres:11
+    environment:
+      POSTGRES_USER: databless
+      POSTGRES_PASSWORD: databless
+      POSTGRES_DB: databless
+    ports:
+      - "10001:5432"
+  postgres2:
+    image: postgres:11
+    environment:
+      POSTGRES_USER: databless
+      POSTGRES_PASSWORD: databless
+      POSTGRES_DB: databless
+    ports:
+      - "10002:5432"
+  postgres3:
+    image: postgres:11
+    environment:
+      POSTGRES_USER: databless
+      POSTGRES_PASSWORD: databless
+      POSTGRES_DB: databless
+    ports:
+      - "10003:5432"
