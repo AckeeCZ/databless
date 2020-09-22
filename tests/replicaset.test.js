@@ -95,4 +95,21 @@ describe.skip('Replicaset', () => {
             expect(result.find(x => x.title === 'readInstance2')).not.toBeUndefined();
         }
     });
+    test('Transacted queries always use write instances', async () => {
+        const TRX_INSERT = { title: 'trx-insert' };
+        await knex.transaction(async trx => {
+            await knex('records').transacting(trx)
+                .insert(TRX_INSERT);
+            {
+                const result = await knex('records').transacting(trx);
+                expect(result.find(x => x.title === TRX_INSERT.title)).not.toBeUndefined();
+                expect(result.find(x => x.title === 'writeInstance1')).not.toBeUndefined();
+            }
+        });
+        // And non-trx queries are again from read instances
+        {
+            const result = await knex('records');
+            expect(result.find(x => x.title === 'writeInstance1')).toBeUndefined();
+        }
+    });
 });

@@ -52,6 +52,10 @@ exports.initKnex = (config = { writeNodes: [], readNodes: [], proxy: {}, select:
         return config.select(useWriteNode ? writeNodes : readNodes, useWriteNode)
             .client.runner(builder);
     };
+    replicaKnex.client.transaction = function (container, txConfig, outerTx) {
+        return config.select(writeNodes, true)
+            .client.transaction(container, txConfig, outerTx);
+    };
     replicaKnex.client.destroy = () => {
         return Promise.all([
             ...writeNodes.map(node => node.client.destroy()),
