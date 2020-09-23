@@ -11,9 +11,11 @@ describe.skip('Replicaset', () => {
                     connection: {
                         host: 'localhost',
                         port: '10001',
+                        database: 'databless',
                         user: 'databless',
                         password: 'databless',
                     },
+                    // debug: true,
                 },
             ],
             readNodes: [
@@ -24,6 +26,7 @@ describe.skip('Replicaset', () => {
                         port: '10002',
                         user: 'databless',
                         password: 'databless',
+                        database: 'databless',
                     },
                 },
                 {
@@ -33,6 +36,7 @@ describe.skip('Replicaset', () => {
                         port: '10003',
                         user: 'databless',
                         password: 'databless',
+                        database: 'databless',
                     },
                 },
             ],
@@ -41,6 +45,7 @@ describe.skip('Replicaset', () => {
             },
             select: replicaset.createRoundRobinSelectionStrategy(),
         });
+
         knex = databless.getKnex();
         // Prepare instances - purge & create some schema with a one row
         // to identify an instance
@@ -65,7 +70,7 @@ describe.skip('Replicaset', () => {
     });
     afterAll(async () => {
         await knex.destroy();
-    })
+    });
     test('RR for reads', async () => {
         {
             const result = await knex('records');
