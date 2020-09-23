@@ -70,3 +70,44 @@ exports.initKnex = (config = { writeNodes: [], readNodes: [], proxy: {}, select:
 
 exports.writeReplicas = (knex) => knex.__rdbgwReplicaWriteNodes;
 exports.readReplicas = (knex) => knex.__rdbgwReplicaReadNodes;
+
+
+// WIP POC of using first write replica as for proxy knex
+// @experimental
+exports.initKnexMasterAsProxy = (config = { writeNodes: [], readNodes: [], select: createRoundRobinSelectionStrategy() }, key = 'default') => {
+    const createKnex = require('knex'); // eslint-disable-line global-require
+    config.select = config.select || this.createRoundRobinSelectionStrategy();
+    const replicaKnex = initKnex(config.writeNodes[0], key);
+    const writeNodes = config.writeNodes.slice(1).map(createKnex);
+    writeNodes.unshift(replicaKnex);
+    const readNodes = config.readNodes.map(createKnex);
+
+    const originalClientRunner = replicaKnex.client.runner.bind(replicaKnex.client);
+    const originalClientTransaction = replicaKnex.client.transaction.bind(replicaKnex.client);
+    const originalClientDestroy = replicaKnex.client.destroy.bind(replicaKnex.client);
+    replicaKnex.client.runner = function (builder) {
+        const useWriteNode = exports.isWriteBuilder(builder);
+        let node = config.select(useWriteNode ? writeNodes : readNodes, useWriteNode);
+        if (node === replicaKnex) {
+            return originalClientRunner(builder);
+        }
+        return node.client.runner(builder);
+    };
+    replicaKnex.client.transaction = function (container, txConfig, outerTx) {
+        let node = config.select(writeNodes, true)
+        if (node === replicaKnex) {
+            return originalClientTransaction(container, txConfig, outerTx);
+        }
+        return node.client.transaction(container, txConfig, outerTx);
+    };
+    replicaKnex.client.destroy = () => {
+        return Promise.all([
+            originalClientDestroy(),
+            ...writeNodes.slice(1).map(node => node.client.destroy()),
+            ...readNodes.map(node => node.client.destroy()),
+        ]);
+    };
+    replicaKnex.__rdbgwReplicaWriteNodes = writeNodes;
+    replicaKnex.__rdbgwReplicaReadNodes = readNodes;
+    return replicaKnex;
+};
