@@ -62,6 +62,7 @@ exports.initKnex = (config = { writeNodes: [], readNodes: [], proxy: {}, select:
             ...readNodes.map(node => node.client.destroy()),
         ]);
     };
+    replicaKnex.client.config = writeNodes[0].client.config;
     replicaKnex.__rdbgwReplicaWriteNodes = writeNodes;
     replicaKnex.__rdbgwReplicaReadNodes = readNodes;
     return replicaKnex;
