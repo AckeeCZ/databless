@@ -16,7 +16,7 @@ exports.createRoundRobinSelectionStrategy = () => {
 };
 
 exports.isWriteQuery = (query) => {
-    return ['insert', 'del', 'update'].includes(query.method);
+    return ['insert', 'del', 'update', 'truncate'].includes(query.method);
 };
 
 exports.isWriteBuilder = (builder) => {
