@@ -127,4 +127,35 @@ update.withDetailById(id)
 - `composeQb` - `composeQb(options, qb => ...)` automatic wrap for composing multiple querybuilders in different layers of the application. Prevents qb option overwriting.
 
 
+### Replicas
+
+- create a sql replicaset supported knex isntance
+    ```js
+    const { replicaset } = require('databless');
+    const knex = replicaset.initKnex({
+        writeNodes: [/* Knex.Config */],
+        readNodes: [/* Knex.Config */],
+        proxy: { client: /* Knex.Config['client'] */ },
+        select: replicaset.createRoundRobinSelectionStrategy(),
+    });
+    ```
+
+    - `proxy` is a "virtual knex" instance, that - when it comes to executing
+    a query - selects a real knex instance via `select` method and executes query on that knex instance.
+    - `select` is any fn `(instances: Knex[], isWriteQuery: bool) => Knex)`,
+    you can use predefined `replicaset.createRoundRobinSelectionStrategy()` as
+    a default Round Robin selector.
+- acessing read/write Knex instances directly
+    - using proxy knex instance
+    ```js
+    replicaset.writeReplicas(knex) // Knex[]
+    replicaset.readReplicas(knex) // Knex[]
+    ```
+- destroying proxy instance destroys all underlying knex instances
+- testing (`docker-compose` required):
+    - `cd docker-compose`
+    - `docker-compose up`
+    - remove `skip` from `/tests/replicaset.test.js`
+    - `npm t`
+
 
