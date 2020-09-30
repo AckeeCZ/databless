@@ -22,7 +22,7 @@ exports.isWriteQuery = (query) => {
 exports.isWriteBuilder = (builder) => {
     // Enable query context override: knex.select('*').queryContext({ replicaNode: 'write' | 'read' })
     if (builder._queryContext && 'replicaNode' in builder._queryContext) {
-        return builder._queryContext === 'write';
+        return builder._queryContext.replicaNode === 'write';
     } 
     const sql = builder.toSQL();
     return Array.isArray(sql) ? sql.some(exports.isWriteQuery) : exports.isWriteQuery(sql);
