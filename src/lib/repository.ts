@@ -38,18 +38,24 @@ type Attributes = Record<string, Attribute>;
 type CustomFilter<T = any> = (value: T, options: RepositoryMethodOptions) => void;
 export type CustomFilters = Record<string, CustomFilter>;
 
-export interface ModelOptions<E extends Entity = Entity, RK extends keyof E = never, CF extends CustomFilters = CustomFilters> {
+export interface ModelOptions {
     adapter: () => Knex;
     collectionName: string;
     attributes: Attributes;
-    filters?: CF;
+    filters?: CustomFilters;
 }
 
 type Entity = Record<string, any>
-export interface Model<E extends Entity = Entity, RK extends keyof E = never, CF extends CustomFilters = CustomFilters> {
-    getBookshelfModel: () => E & any;
+type Metadata<E> = {
+    relationKeys?: keyof E;
+    customFilters?: CustomFilters;
+}
+type GetCF<M extends Metadata<any>> = 'customFilters' extends keyof M ? M['customFilters'] : {}
+type GetRK<M extends Metadata<any>> = 'relationKeys' extends keyof M ? M['relationKeys'] : never
+export interface Model<E extends Entity = Entity, M extends Metadata<E> = {}> {
+    getBookshelfModel: () => E & M & any;
     attributeNames: string[];
-    options: ModelOptions<CF>;
+    options: ModelOptions;
     deserialize: (object?: any) => any; // TODO Types
     serialize: (object?: any) => any; // TODO Types
 }
@@ -61,27 +67,27 @@ export interface RepositoryMethodOptions {
     toJSON?: SerializeOptions;
     qb?: bookshelfUtil.QbOption;
 }
-export interface RepositoryDetailOptions<E extends Entity, RK extends keyof E> extends RepositoryMethodOptions {
+export interface RepositoryDetailOptions<E extends Entity, M extends Metadata<E>> extends RepositoryMethodOptions {
     // TODO: This type restricts using withRelated on transitive fields
-    withRelated?: RK[];
+    withRelated?: GetRK<M>[];
 }
-export interface RepositoryListOptions<E extends Entity, RK extends keyof E> extends RepositoryDetailOptions<E, RK> {
+export interface RepositoryListOptions<E extends Entity, M extends Metadata<E>> extends RepositoryDetailOptions<E, M> {
     count?: true;
-    order?: Exclude<keyof E, RK> | Exclude<keyof E, RK>[];
+    order?: Exclude<keyof E, GetRK<M>> | Exclude<keyof E, GetRK<M>>[];
     limit?: number;
     offset?: number;
 }
 
-type Filters<E extends Entity, RK extends keyof E, CF extends CustomFilters> = Partial<{[key in keyof E]: E[key] | E[key][]} & {[key in keyof CF]: CF[key] extends CustomFilter<infer T> ? T : never }>;
+type Filters<E extends Entity, M extends Metadata<E>> = Partial<{[key in keyof E]: E[key] | E[key][]} & {[key in keyof M['customFilters']]: M['customFilters'][key] extends CustomFilter<infer T> ? T : never }>;
 
-export const create = async <E extends Entity, RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>, data: Partial<E>, options?: RepositoryMethodOptions): Promise<E> => {
+export const create = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Partial<E>, options?: RepositoryMethodOptions): Promise<E> => {
     data = model.serialize(data);
     const result = await (model.getBookshelfModel().forge())
         .save(pick(data, model.attributeNames), options);
     return bookshelfUtil.serializer(options)(result);
 };
 
-export const createBulk = async <E extends Entity, RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>, data: Array<Partial<E>>, options?: RepositoryMethodOptions): Promise<unknown> => {
+export const createBulk = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Array<Partial<E>>, options?: RepositoryMethodOptions): Promise<unknown> => {
     return model.options.adapter().batchInsert(
         model.options.collectionName,
         data.map(dataItem => model.serialize(dataItem))
@@ -90,7 +96,7 @@ export const createBulk = async <E extends Entity, RK extends keyof E, CF extend
     );
 };
 
-export const list = async <E extends Entity, RK extends keyof E, CF extends CustomFilters, O extends RepositoryListOptions<E, RK>>(model: Model<E, RK, CF>, filter?: Filters<E, RK, CF>, options?: O): Promise<O['count'] extends true ? number : E[]> => {
+export const list = async <E extends Entity, M extends Metadata<E>, O extends RepositoryListOptions<E, M>>(model: Model<E, M>, filter?: Filters<E, M>, options?: O): Promise<O['count'] extends true ? number : E[]> => {
     const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options)
         .fetchAll(options);
     if (options?.count) {
@@ -101,7 +107,7 @@ export const list = async <E extends Entity, RK extends keyof E, CF extends Cust
 };
 
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
-export const detail = async <E extends Entity, RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>, filter?: Filters<E, RK, CF>, options?: RepositoryDetailOptions<E, RK>): Promise<E> => {
+export const detail = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryDetailOptions<E, M>): Promise<E> => {
     // TODO DB Limit 1
     const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options)
         .fetch(defaults({ require: false }, options));
@@ -115,7 +121,7 @@ export const detail = async <E extends Entity, RK extends keyof E, CF extends Cu
  * @param data 
  * @param options 
  */
-export const update = async <E extends Entity, RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>, filter: Filters<E, RK, CF>, data?: Partial<E>, options: RepositoryMethodOptions = {}): Promise<E | undefined> => {
+export const update = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}): Promise<E | undefined> => {
     // TODO `defaultPagination` from master
     data = model.serialize(pick(data, model.attributeNames));
     if (!data || isEmpty(data)) {
@@ -126,7 +132,7 @@ export const update = async <E extends Entity, RK extends keyof E, CF extends Cu
     return bookshelfUtil.serializer(options)(result);
 };
 
-const remove = async <E extends Entity, RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>, filter?: Filters<E, RK, CF>, options?: RepositoryMethodOptions): Promise<unknown> => {
+const remove = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryMethodOptions): Promise<unknown> => {
     // TODO: check there is no typo in filters
     if (!filter || isEmpty(filter)) {
         const optionQb = (options?.qb) || (x => x);
@@ -283,7 +289,7 @@ export const wildcards = (() => {
     };
 })();
 
-export const createModel = <E extends Entity, RK extends keyof E, CF extends CustomFilters>(options: ModelOptions<E, RK, CF>): Model<E, RK, CF> => {
+export const createModel = <E extends Entity, M extends Metadata<E>>(options: ModelOptions): Model<E, M> => {
     const getBookshelfModel: (noRelations?: boolean) => any /* TODO Type */ = memoize(() => bookshelfUtil.createModel(options));
     const attributeNames = Object.keys(options.attributes);
     return {
@@ -295,13 +301,13 @@ export const createModel = <E extends Entity, RK extends keyof E, CF extends Cus
     };
 };
 
-export const createRepository = <E extends Entity,RK extends keyof E, CF extends CustomFilters>(model: Model<E, RK, CF>) => {
+export const createRepository = <E extends Entity,M extends Metadata<E>>(model: Model<E, M>) => {
     return {
         create: (data: Partial<E>, options?: RepositoryMethodOptions) => create(model, data, options),
-        list: <O extends RepositoryListOptions<E, RK>>(filter?: Filters<E, RK, CF>, options?: O) => list(model, filter, options),
-        detail: (filter?: Filters<E, RK, CF>, options?: RepositoryDetailOptions<E, RK>) => detail(model, filter, options),
-        update: (filter: Filters<E, RK, CF>, data?: Partial<E>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
-        delete: (filter?: Filters<E, RK, CF>, options?: RepositoryMethodOptions) => remove(model, filter, options),
+        list: <O extends RepositoryListOptions<E, M>>(filter?: Filters<E, M>, options?: O) => list(model, filter, options),
+        detail: (filter?: Filters<E, M>, options?: RepositoryDetailOptions<E, M>) => detail(model, filter, options),
+        update: (filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
+        delete: (filter?: Filters<E, M>, options?: RepositoryMethodOptions) => remove(model, filter, options),
         createBulk: (dataItems: Array<Partial<E>>, options?: RepositoryMethodOptions) => createBulk(model, dataItems, options),
     };
 };

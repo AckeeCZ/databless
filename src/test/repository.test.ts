@@ -221,7 +221,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     describe('Single model read', () => {
         let knex: Knex;
         type Entity = { id: number, string: string, number: number }
-        const model = repository.createModel<Entity, never, {}>({
+        const model = repository.createModel<Entity, {}>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -582,7 +582,7 @@ describe('Repository (Knex/Bookshelf)', () => {
         type RelationModelEntity = {
             id: number, model_id: number
         }
-        const relatedModel = repository.createModel<RelationModelEntity, never, {}>({
+        const relatedModel = repository.createModel<RelationModelEntity, {}>({
             adapter: () => knex,
             collectionName: 'related_model',
             attributes: {
@@ -593,7 +593,7 @@ describe('Repository (Knex/Bookshelf)', () => {
         type ModelEntity = {
             id: number, model_id: number, hasManyRelationReflexive: ModelEntity[], hasManyRelation: RelationModelEntity[]
         }
-        const model = repository.createModel<ModelEntity, never, {}>({
+        const model = repository.createModel<ModelEntity, { relationKeys: 'hasManyRelationReflexive' | 'hasManyRelation' }>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -704,7 +704,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     describe('model-belongsToMany', () => {
         let knex: Knex;
         type AccountEntity = {id: number, users: UserEntity[]}
-        const accountModel = repository.createModel<AccountEntity, 'users', {}>({
+        const accountModel = repository.createModel<AccountEntity, { relationKeys: 'users' }>({
             adapter: () => knex,
             collectionName: 'accounts',
             attributes: {
@@ -719,7 +719,7 @@ describe('Repository (Knex/Bookshelf)', () => {
         //  TODO Circular reference type problem. But works in JS
         const getAccountModel = (): any => accountModel;
         type UserEntity = {id: number, friends: UserEntity[], accounts: AccountEntity[]}
-        const userModel = repository.createModel<UserEntity, 'friends' | 'accounts', {}>({
+        const userModel = repository.createModel<UserEntity, { relationKeys: 'friends' | 'accounts' }>({
             adapter: () => knex,
             collectionName: 'users',
             attributes: {
