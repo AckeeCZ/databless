@@ -726,7 +726,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     describe('model-belongsToMany', () => {
         let knex: Knex;
         type AccountEntity = {id: number, users: UserEntity[]}
-        const accountModel = repository.createModel<AccountEntity, { relationKeys: 'users' }>({
+        const accountModel: repository.Model<AccountEntity, { relationKeys: 'users' }> = repository.createModel({
             adapter: () => knex,
             collectionName: 'accounts',
             attributes: {
@@ -738,8 +738,6 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        //  TODO Circular reference type problem. But works in JS
-        const getAccountModel = (): any => accountModel;
         type UserEntity = {id: number, friends: UserEntity[], accounts: AccountEntity[]}
         const userModel = repository.createModel<UserEntity, { relationKeys: 'friends' | 'accounts' }>({
             adapter: () => knex,
@@ -756,7 +754,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
                 accounts: {
                     type: 'relation',
-                    targetModel: getAccountModel,
+                    targetModel: () => accountModel,
                     relation: repository.bookshelfRelation.createBelongsToMany(),
                 },
             },
