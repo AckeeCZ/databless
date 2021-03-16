@@ -6,7 +6,7 @@ const db = createDatabase({ debug: false });
 
 describe('Count', () => {
     let knex: Knex;
-    const model = repository.createModel({
+    const model = repository.createModel<{ id: number, string: string }>({
         adapter: () => knex,
         collectionName: 'model',
         attributes: {

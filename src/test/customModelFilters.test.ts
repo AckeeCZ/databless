@@ -8,7 +8,7 @@ const db = createDatabase({ debug: false });
 
 describe('Custom model filters', () => {
     let knex: Knex;
-    const model = repository.createModel({
+    const model = repository.createModel<{ id: number, name: string }, { customFilters: { nameReverso: (str: string) => void } }>({
         adapter: () => knex,
         collectionName: 'model',
         attributes: {

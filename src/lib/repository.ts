@@ -52,7 +52,7 @@ type Metadata<E> = {
 }
 type GetCF<M extends Metadata<any>> = 'customFilters' extends keyof M ? M['customFilters'] : {}
 type GetRK<M extends Metadata<any>> = 'relationKeys' extends keyof M ? M['relationKeys'] : never
-export interface Model<E extends Entity = Entity, M extends Metadata<E> = {}> {
+export interface Model<E extends Entity = {}, M extends Metadata<E> = {}> {
     getBookshelfModel: () => E & M & any;
     attributeNames: string[];
     options: ModelOptions;
@@ -289,7 +289,7 @@ export const wildcards = (() => {
     };
 })();
 
-export const createModel = <E extends Entity, M extends Metadata<E>>(options: ModelOptions): Model<E, M> => {
+export const createModel = <E extends Entity = never, M extends Metadata<E> = never>(options: ModelOptions): Model<E, M> => {
     const getBookshelfModel: (noRelations?: boolean) => any /* TODO Type */ = memoize(() => bookshelfUtil.createModel(options));
     const attributeNames = Object.keys(options.attributes);
     return {
@@ -301,7 +301,7 @@ export const createModel = <E extends Entity, M extends Metadata<E>>(options: Mo
     };
 };
 
-export const createRepository = <E extends Entity,M extends Metadata<E>>(model: Model<E, M>) => {
+export const createRepository = <E extends Entity, M extends Metadata<E>>(model: Model<E, M>) => {
     return {
         create: (data: Partial<E>, options?: RepositoryMethodOptions) => create(model, data, options),
         list: <O extends RepositoryListOptions<E, M>>(filter?: Filters<E, M>, options?: O) => list(model, filter, options),

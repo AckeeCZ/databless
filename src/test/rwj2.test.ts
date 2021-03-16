@@ -16,15 +16,25 @@ describe('🚚', () => {
         Inactive = 'inactive',
     }
 
-    const Tour = repository.createModel({
+    type Tour = {
+        id: number
+        state: string
+    }
+    const Tour = repository.createModel<Tour>({
         adapter: () => knex,
         collectionName: 'tours',
         attributes: {
             id: { type: 'number' },
-            state: { type: 'string', deserialize: (x): TourState => x },
+            state: { type: 'string' },
         },
     });
-    const Vehicle = repository.createModel({
+    type Vehicle = {
+        id: number
+        plate: string
+        activeTours: Tour[]
+        activeTourPings: Ping[]
+    }
+    const Vehicle = repository.createModel<Vehicle, { relationKeys: 'activeTours' | 'activeTourPings' }>({
         adapter: () => knex,
         collectionName: 'vehicles',
         attributes: {
@@ -57,7 +67,11 @@ describe('🚚', () => {
             },
         },
     });
-    const TourVehicle = repository.createModel({
+    type TourVehicle = {
+        vehicleId: number
+        tourId: number
+    }
+    const TourVehicle = repository.createModel<TourVehicle>({
         adapter: () => knex,
         collectionName: 'tourVehicles',
         attributes: {
@@ -65,7 +79,15 @@ describe('🚚', () => {
             tourId: { type: 'number' },
         },
     });
-    const Ping = repository.createModel({
+    type Ping = {
+        vehicleId: number,
+        tourId: number,
+        createAt: Date,
+        lat: number,
+        lng: number,
+    }
+    
+    const Ping = repository.createModel<Ping>({
         adapter: () => knex,
         collectionName: 'vehiclePings',
         attributes: {

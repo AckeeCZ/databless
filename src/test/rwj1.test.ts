@@ -21,7 +21,17 @@ describe('🚗', () => {
         partner = 'partner',
         support = 'support',
     }
-    const User = repository.createModel({
+    type User = {
+        id: string,
+        eulaAgreedAt: Date,
+        firstName: string,
+        isCourier: boolean,
+        isCustomer: boolean,
+        isAdmin: boolean,
+        isSupport: boolean,
+        isPartner: boolean,
+    }
+    const User = repository.createModel<User>({
         adapter: () => knex,
         collectionName: 'users',
         attributes: {

@@ -4,13 +4,18 @@ import createDatabase from './knexDatabase';
 
 const db = createDatabase({ debug: false });
 
+type IdStringEntity = {
+    id: number;
+    string: string;
+};
+
 describe('Repository (Knex/Bookshelf)', () => {
     afterAll(async () => {
         await db.disconnect();
     });
     describe('Single model create', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        const model = repository.createModel<IdStringEntity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -40,7 +45,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             `);
         });
         test('Create ignores columns not set in attributes', async () => {
-            const data = { nonExisting: 'stringValue' } as Partial<repository.Model2Entity<typeof model>>;
+            const data = { nonExisting: 'stringValue' } as Partial<IdStringEntity>;
             const result = await repository.create(model, data);
             expect(result).toMatchInlineSnapshot(`
                 Object {
@@ -51,7 +56,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Repository', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        const model = repository.createModel<IdStringEntity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -90,7 +95,8 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Property serialization', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        type SerializationEntity = { id: number, objectStoredAsJson: any }
+        const model = repository.createModel<SerializationEntity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -172,7 +178,8 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Single model update', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        type Entity = IdStringEntity & { string2: string }
+        const model = repository.createModel<Entity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -288,7 +295,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Inequality filtering', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        const model = repository.createModel<{ id: number, name: string, notAge: number }>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -338,7 +345,12 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Searching (like querying)', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        type IdNameEntity = {
+            id: number;
+            name: string;
+        };
+
+        const model = repository.createModel<IdNameEntity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -346,7 +358,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 name: { type: 'string' },
             },
         });
-        let users: repository.Model2Entity<typeof model>[];
+        let users: IdNameEntity[];
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -378,7 +390,11 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Custom select queries', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        type IdNameEntity = {
+            id: number;
+            name: string;
+        };
+        const model = repository.createModel<IdNameEntity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -386,7 +402,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 name: { type: 'string' },
             },
         });
-        let users: repository.Model2Entity<typeof model>[];
+        let users: IdNameEntity[];
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -414,7 +430,9 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Relation default custom queries', () => {
         let knex: Knex;
-        const bookModel = repository.createModel({
+        type Author = { id: number, name: string, books: Book[] }
+        type Book = { id: number, author_id: number, type: string}
+        const bookModel = repository.createModel<Book>({
             adapter: () => knex,
             collectionName: 'books',
             attributes: {
@@ -423,7 +441,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 type: { type: 'string' },
             },
         });
-        const authorModel = repository.createModel({
+        const authorModel = repository.createModel<Author, { relationKeys: 'books' }>({
             adapter: () => knex,
             collectionName: 'authors',
             attributes: {
@@ -438,8 +456,8 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        let author: repository.Model2Entity<typeof authorModel>;
-        let books: repository.Model2Entity<typeof bookModel>[];
+        let author: Author;
+        let books: Book[];
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(authorModel);
@@ -460,7 +478,7 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Pagination', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        const model = repository.createModel<{id: number}>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -504,7 +522,9 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('model-hasOne', () => {
         let knex: Knex;
-        const HealthRecord = repository.createModel({
+        type HealthRecord = { id: number, patient_id: number }
+        type Patient = { id: number, clone_of_id: number, clone: Patient, healthRecord: HealthRecord }
+        const HealthRecord = repository.createModel<HealthRecord>({
             adapter: () => knex,
             collectionName: 'health_records',
             attributes: {
@@ -512,7 +532,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 patient_id: { type: 'number' },
             },
         });
-        const Patient = repository.createModel({
+        const Patient = repository.createModel<Patient, { relationKeys: 'clone' | 'healthRecord' }>({
             adapter: () => knex,
             collectionName: 'patients',
             attributes: {
@@ -653,14 +673,16 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('model-belongsTo', () => {
         let knex: Knex;
-        const authorModel = repository.createModel({
+        type Author = { id: number }
+        type Book = { id: number, author_id: number, next_book_id: number, nextBook: Book, author: Author }
+        const authorModel = repository.createModel<Author>({
             adapter: () => knex,
             collectionName: 'authors',
             attributes: {
                 id: { type: 'number' },
             },
         });
-        const bookModel = repository.createModel({
+        const bookModel = repository.createModel<Book, { relationKeys: 'nextBook' | 'author' }>({
             adapter: () => knex,
             collectionName: 'books',
             attributes: {
@@ -740,7 +762,7 @@ describe('Repository (Knex/Bookshelf)', () => {
             },
         });
         // Defined for the Migration util to create the table
-        const usersAccountsModel = repository.createModel({
+        const usersAccountsModel = repository.createModel<{ account_id: number, user_id: number }>({
             adapter: () => knex,
             collectionName: 'accounts_users',
             attributes: {
@@ -748,7 +770,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 user_id: { type: 'number' },
             },
         });
-        const usersUsersModel = repository.createModel({
+        const usersUsersModel = repository.createModel<{ user_a_id: number, user_b_id: number }>({
             adapter: () => knex,
             collectionName: 'users_users',
             attributes: {

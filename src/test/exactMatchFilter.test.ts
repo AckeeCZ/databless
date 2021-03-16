@@ -6,7 +6,7 @@ const db = createDatabase({ debug: false });
 
 describe('Exact match filter', () => {
     let knex: Knex;
-    const model = repository.createModel({
+    const model = repository.createModel<{ id: number, string: string, number: number }>({
         adapter: () => knex,
         collectionName: 'model',
         attributes: {
@@ -60,7 +60,7 @@ describe('Exact match filter', () => {
         expect(result).toEqual(undefined);
     });
     test('Filters on model-undefined attributes are ignored', async () => {
-        const result = await repository.detail(model, { string: 'nonexistingstringihope', stringX: '' });
+        const result = await repository.detail(model, { string: 'nonexistingstringihope', stringX: '' } as any);
         expect(result).toEqual(undefined);
     });
     test('Filtering undefined fields are ignored', async () => {
