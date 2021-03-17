@@ -35,14 +35,14 @@ export type Attributes2NonRelationKeys<A extends Attributes> = { [key in keyof A
 export type Model2Entity<M extends Model<any>> = Attributes2Entity<M['options']['attributes']>;
 export type Model2RelationKeys<M extends Model<any>> = Attributes2RelationKeys<M['options']['attributes']>;
 type Attributes = Record<string, Attribute>;
-type CustomFilter<T = any> = (value: T, options: RepositoryMethodOptions) => void;
-export type CustomFilters = Record<string, CustomFilter>;
+type CustomFilterFunction<T = any> = (value: T, options: RepositoryMethodOptions) => void;
+export type CustomFilters = Record<string, any>;
 
 export interface ModelOptions {
     adapter: () => Knex;
     collectionName: string;
     attributes: Attributes;
-    filters?: CustomFilters;
+    filters?: Record<string, CustomFilterFunction>;
 }
 
 type Entity = Record<string, any>
@@ -78,7 +78,7 @@ export interface RepositoryListOptions<E extends Entity, M extends Metadata<E>> 
     offset?: number;
 }
 
-type Filters<E extends Entity, M extends Metadata<E>> = Partial<{[key in keyof E]: E[key] | E[key][]} & {[key in keyof M['customFilters']]: M['customFilters'][key] extends CustomFilter<infer T> ? T : never }>;
+type Filters<E extends Entity, M extends Metadata<E>> = Partial<{[key in keyof E]: E[key] | E[key][]} & {[key in keyof M['customFilters']]: M['customFilters'][key] }>;
 
 export const create = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Partial<E>, options?: RepositoryMethodOptions): Promise<E> => {
     data = model.serialize(data);
