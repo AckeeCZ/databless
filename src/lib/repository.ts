@@ -6,21 +6,6 @@ import * as bookshelfUtil from './bookshelfUtil';
 type Primitive = 'string' | 'number' | 'date' | 'bool' | 'object';
 type PrimitiveToType<P> = P extends 'string' ? string : P extends 'date' ? Date : P extends 'number' ? number : P extends 'bool' ? boolean : P extends 'object' ? any : never;
 
-type AttributeRelation2Target<P, S = never> = P extends { targetModel: 'self' }
-    ? S extends Attributes
-        ? Attributes2Entity<S>
-        : never
-    : P extends { targetModel: () => infer M }
-    ? M extends Model
-        ? Model2Entity<M>
-        : never
-    : never;
-
-export type AttributeRelation2Type<P, S = never> = P extends { type: 'relation' }
-    ? P extends { relation: { collection: true } } ? AttributeRelation2Target<P, S>[] : AttributeRelation2Target<P, S>
-    : never;
-
-type Attribute2Type<P, S = never> = P extends AttributeRelation ? AttributeRelation2Type<P, S> : P extends { deserialize: (x: any) => infer R } ? R : P extends { type: infer X } ? PrimitiveToType<X> : never;
 type PrimitiveAttribute = { type: Primitive, serialize?: (x: any) => PrimitiveToType<Primitive>, deserialize?: (x: any) => any };
 type Attribute = AttributeRelation | PrimitiveAttribute;
 export type Relation = { collection: boolean }
@@ -29,11 +14,6 @@ export type AttributeRelation<R extends Relation = any> = {
     targetModel: (() => Model<any>) | 'self'
     relation: R
 }
-export type Attributes2Entity<A extends Attributes> = { [key in keyof A]: A[key] extends Attribute ? Attribute2Type<A[key], A> : never };
-export type Attributes2RelationKeys<A extends Attributes> = { [key in keyof A]: A[key] extends { type: 'relation' } ? key : never }[keyof A];
-export type Attributes2NonRelationKeys<A extends Attributes> = { [key in keyof A]: A[key] extends { type: 'relation' } ? never : key }[keyof A];
-export type Model2Entity<M extends Model<any>> = Attributes2Entity<M['options']['attributes']>;
-export type Model2RelationKeys<M extends Model<any>> = Attributes2RelationKeys<M['options']['attributes']>;
 type Attributes = Record<string, Attribute>;
 type CustomFilterFunction<T = any> = (value: T, options: RepositoryMethodOptions) => void;
 export type CustomFilters = Record<string, any>;

@@ -11,7 +11,8 @@ describe('Bulk create', () => {
     });
     describe('Single model create', () => {
         let knex: Knex;
-        const model = repository.createModel({
+        type Entity = { id: number, string: string }
+        const model = repository.createModel<Entity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -27,7 +28,7 @@ describe('Bulk create', () => {
             await repository.delete(model);
         });
         test('Create n elements', async () => {
-            const data: Array<Partial<repository.Model2Entity<typeof model>>> = [
+            const data: Array<Partial<Entity>> = [
                 { string: 'a' },
                 { string: 'b' },
                 { string: 'c' },
@@ -37,7 +38,7 @@ describe('Bulk create', () => {
             expect(list).toMatchObject(data);
         });
         test('Create elements with fields not defined on the model', async () => {
-            const data: Array<Partial<repository.Model2Entity<typeof model>>> = [
+            const data: Array<Partial<Entity>> = [
                 { string: 'a', notdefined: 'avalue' } as any /* Override not-defined field*/,
             ];
             await repository.createBulk(model, data);
@@ -45,7 +46,7 @@ describe('Bulk create', () => {
             expect(list).toMatchObject(data.map(d => pick(d, model.attributeNames)));
         });
         test('Create elements with undefined fields are ignored', async () => {
-            const data: Array<Partial<repository.Model2Entity<typeof model>>> = [{ string: undefined }];
+            const data: Array<Partial<Entity>> = [{ string: undefined }];
             await repository.createBulk(model, data);
             const list = await repository.list(model);
             expect(list).toMatchInlineSnapshot(`

@@ -108,7 +108,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        let record: repository.Model2Entity<typeof model>;
+        let record: SerializationEntity;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -135,9 +135,10 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Delete', () => {
         let knex: Knex;
-        let model: repository.Model<any>;
-        let record1: repository.Model2Entity<typeof model>;
-        let record2: repository.Model2Entity<typeof model>;
+        type Entity = { id: number }
+        let model: repository.Model<Entity>;
+        let record1: Entity;
+        let record2: Entity;
         beforeEach(async () => {
             knex = await db.reset();
             model = repository.createModel({
@@ -188,7 +189,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 string2: { type: 'string' },
             },
         });
-        let record: repository.Model2Entity<typeof model>;
+        let record: Entity;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -295,7 +296,8 @@ describe('Repository (Knex/Bookshelf)', () => {
     });
     describe('Inequality filtering', () => {
         let knex: Knex;
-        const model = repository.createModel<{ id: number, name: string, notAge: number }>({
+        type Entity = { id: number, name: string, notAge: number }
+        const model = repository.createModel<Entity>({
             adapter: () => knex,
             collectionName: 'model',
             attributes: {
@@ -304,7 +306,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 notAge: { type: 'number' },
             },
         });
-        let users: repository.Model2Entity<typeof model>[];
+        let users: Entity[];
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -552,8 +554,8 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        let patient: repository.Model2Entity<typeof Patient>;
-        let patient2: repository.Model2Entity<typeof Patient>;
+        let patient: Patient;
+        let patient2: Patient;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(Patient);
@@ -633,7 +635,7 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        let motherRecord: repository.Model2Entity<typeof model>;
+        let motherRecord: ModelEntity;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(model);
@@ -703,8 +705,8 @@ describe('Repository (Knex/Bookshelf)', () => {
                 },
             },
         });
-        let book: repository.Model2Entity<typeof bookModel>;
-        let author: repository.Model2Entity<typeof authorModel>;
+        let book: Book;
+        let author: Author;
         beforeAll(async () => {
             knex = await db.reset();
             await db.createTable(bookModel);

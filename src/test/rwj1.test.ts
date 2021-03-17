@@ -46,7 +46,7 @@ describe('🚗', () => {
         },
     });
     const Users = repository.createRepository(User);
-    const serializeUser = (user: Partial<Omit<repository.Model2Entity<typeof User>, 'isCourier' | 'isCustomer' | 'isAdmin' | 'isSupport' | 'isPartner'> & { eulaAgreed: boolean, roles: UserRole[] }>): Partial<repository.Model2Entity<typeof User>> => {
+    const serializeUser = (user: Partial<Omit<User, 'isCourier' | 'isCustomer' | 'isAdmin' | 'isSupport' | 'isPartner'> & { eulaAgreed: boolean, roles: UserRole[] }>): Partial<User> => {
         return {
             ...user,
             isAdmin: user.roles && user.roles.indexOf(UserRole.admin) > -1,
@@ -58,7 +58,7 @@ describe('🚗', () => {
             eulaAgreedAt: user.eulaAgreed ? new Date() : (null as any as Date),
         };
     };
-    const deserializeUser = (user: Partial<ReturnType<typeof serializeUser>>): Partial<Omit<repository.Model2Entity<typeof User>, 'isCourier' | 'isCustomer' | 'isAdmin' | 'isSupport' | 'isCourier'> & { roles: UserRole[]}> => {
+    const deserializeUser = (user: Partial<ReturnType<typeof serializeUser>>): Partial<Omit<User, 'isCourier' | 'isCustomer' | 'isAdmin' | 'isSupport' | 'isCourier'> & { roles: UserRole[]}> => {
         return omit({
             ...user,
             roles: [
