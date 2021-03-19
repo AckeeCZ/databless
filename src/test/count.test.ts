@@ -33,12 +33,12 @@ describe('Count', () => {
         await db.disconnect();
     });
     test('Count with on filtering', async () => {
-        const result = await repository.list(model, {}, { count: true });
+        const result = await repository.count(model, {});
         expect(result).toEqual(inputData.length);
     });
     test('Count using filters', async () => {
         const filter = { number: 10, string: 'hijklmn' };
-        const result = await repository.list(model, filter, { count: true });
+        const result = await repository.count(model, filter);
         expect(result).toEqual(
             inputData.filter(data => data.number === filter.number).filter(data => data.string === filter.string).length
         );

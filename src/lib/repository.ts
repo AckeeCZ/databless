@@ -52,7 +52,6 @@ export interface RepositoryDetailOptions<E extends Entity, M extends Metadata<E>
     withRelated?: GetRK<M>[];
 }
 export interface RepositoryListOptions<E extends Entity, M extends Metadata<E>> extends RepositoryDetailOptions<E, M> {
-    count?: true;
     order?: Exclude<keyof E, GetRK<M>> | Exclude<keyof E, GetRK<M>>[];
     limit?: number;
     offset?: number;
@@ -76,14 +75,17 @@ export const createBulk = async <E extends Entity, M extends Metadata<E>>(model:
     );
 };
 
-export const list = async <E extends Entity, M extends Metadata<E>, O extends RepositoryListOptions<E, M>>(model: Model<E, M>, filter?: Filters<E, M>, options?: O): Promise<O['count'] extends true ? number : E[]> => {
+export const list = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>): Promise<E[]> => {
     const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options)
         .fetchAll(options);
-    if (options?.count) {
-        return (bookshelfUtil.serializer(options)(result));
-    }
     return (bookshelfUtil.serializer(options)(result))
         .map(model.deserialize);
+};
+
+export const count = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>): Promise<number> => {
+    const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), { ...options, count: true })
+        .fetchAll(options);
+    return (bookshelfUtil.serializer(options)(result));
 };
 
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
@@ -284,7 +286,8 @@ export const createModel = <E extends Entity = never, M extends Metadata<E> = ne
 export const createRepository = <E extends Entity, M extends Metadata<E>>(model: Model<E, M>) => {
     return {
         create: (data: Partial<E>, options?: RepositoryMethodOptions) => create(model, data, options),
-        list: <O extends RepositoryListOptions<E, M>>(filter?: Filters<E, M>, options?: O) => list(model, filter, options),
+        list: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => list(model, filter, options),
+        count: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => count(model, filter, options),
         detail: (filter?: Filters<E, M>, options?: RepositoryDetailOptions<E, M>) => detail(model, filter, options),
         update: (filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
         delete: (filter?: Filters<E, M>, options?: RepositoryMethodOptions) => remove(model, filter, options),
