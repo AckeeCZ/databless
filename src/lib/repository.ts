@@ -83,9 +83,10 @@ export const list = async <E extends Entity, M extends Metadata<E>>(model: Model
 };
 
 export const count = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>): Promise<number> => {
-    const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), { ...options, count: true })
+    const countOptions = { ...options, count: true }
+    const result = await bookshelfUtil.queryModel(model, createEmptyFilter()(filter), countOptions)
         .fetchAll(options);
-    return (bookshelfUtil.serializer(options)(result));
+    return (bookshelfUtil.serializer(countOptions)(result));
 };
 
 // TODO Options should have properties for current adapter, e.g. withRelated for Bookshelf. How?
