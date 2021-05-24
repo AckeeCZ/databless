@@ -5,6 +5,7 @@
 
 import Knex from 'knex';
 import * as repository from '../lib/repository';
+import * as bookshelfUtil from '../lib/bookshelfUtil';
 import createDatabase from './knexDatabase';
 const knexStringcase = require('knex-stringcase');
 
@@ -34,7 +35,7 @@ describe('🚚', () => {
         activeTours: Tour[]
         activeTourPings: Ping[]
     }
-    const Vehicle = repository.createModel<Vehicle, { relationKeys: 'activeTours' | 'activeTourPings' }>({
+    const Vehicle = repository.createModel<Vehicle, { relationKeys: 'activeTours' | 'activeTourPings', customFilters: { tourState: TourState[] } }>({
         adapter: () => knex,
         collectionName: 'vehicles',
         attributes: {
@@ -66,6 +67,14 @@ describe('🚚', () => {
                 }),
             },
         },
+        filters: {
+            tourState: (states: TourState[], options) => {
+                options.qb = bookshelfUtil.composeQb(options.qb, (qb) => {
+                    qb.join('tours', 'tours.id', 'vehicles.tourId')
+                    qb.whereIn('tours.state', states)
+                })
+            },
+        }
     });
     type TourVehicle = {
         vehicleId: number
@@ -191,4 +200,17 @@ describe('🚚', () => {
             expect(activeTourPings).toMatchObject(pings.filter(x => !!tours.find(tour => (tour.state === TourState.Active && tour.id === x.tourId))));
         }
     });
+    test("_getQueryBuilder returns QueryBuilder with applied filters & options", async () => {
+        const vehicle = await Vehicles.create({});
+        const vehiclesQb = Vehicles.getListQueryBuilder({ id: vehicle.id, tourState: [TourState.Active] }, { limit: 10 })
+        // Check that we have a valid QueryBuilder
+        expect(vehiclesQb.toSQL()).toHaveProperty('method')
+        expect(vehiclesQb.toSQL().method).toBe('select')
+        // Check if raw query includes all filters, joins, options, etc.
+        const rawQuery = vehiclesQb.toQuery()
+        expect(rawQuery).toMatch(new RegExp("`vehicles`.`id` = \\d"))
+        expect(rawQuery).toMatch(new RegExp("inner join `tours` on `tours`\\.`id` = `vehicles`\\.`tour_id`"))
+        expect(rawQuery).toMatch(new RegExp("`tours`\\.`state` in \\('active'\\)"))
+        expect(rawQuery).toMatch(new RegExp('limit 10'))
+    })
 });
