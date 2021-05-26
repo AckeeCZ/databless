@@ -284,6 +284,10 @@ export const createModel = <E extends Entity = never, M extends Metadata<E> = ne
     };
 };
 
+export const getListQueryBuilder = <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>): Knex.QueryBuilder => {
+    return bookshelfUtil.queryModel(model, createEmptyFilter()(filter), options).query();
+};
+
 export const createRepository = <E extends Entity, M extends Metadata<E>>(model: Model<E, M>) => {
     return {
         create: (data: Partial<E>, options?: RepositoryMethodOptions) => create(model, data, options),
@@ -293,5 +297,6 @@ export const createRepository = <E extends Entity, M extends Metadata<E>>(model:
         update: (filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
         delete: (filter?: Filters<E, M>, options?: RepositoryMethodOptions) => remove(model, filter, options),
         createBulk: (dataItems: Array<Partial<E>>, options?: RepositoryMethodOptions) => createBulk(model, dataItems, options),
+        getListQueryBuilder: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => getListQueryBuilder(model, filter, options),
     };
 };
