@@ -3,7 +3,7 @@
  * + bookshelf hasMany with internal join
  */
 
-import Knex from 'knex';
+import { Knex } from 'knex';
 import * as repository from '../lib/repository';
 import * as bookshelfUtil from '../lib/bookshelfUtil';
 import createDatabase from './knexDatabase';

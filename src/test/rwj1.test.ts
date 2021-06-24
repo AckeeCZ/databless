@@ -3,7 +3,7 @@
  * + custom update attributes
  * + custom ID via UUID
  */
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { omit } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
 import * as repository from '../lib/repository';

@@ -1,4 +1,4 @@
-import { default as Knex } from 'knex';
+import { Knex } from 'knex';
 import { pick } from 'lodash';
 import * as repository from '../lib/repository';
 import createDatabase from './knexDatabase';

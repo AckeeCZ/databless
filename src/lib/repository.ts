@@ -1,5 +1,5 @@
 import { SerializeOptions } from 'bookshelf';
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 import { defaults, flow, isEmpty, memoize, pick, omitBy } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
 

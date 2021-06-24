@@ -1,11 +1,11 @@
 import * as Bookshelf from 'bookshelf';
-import Knex, { QueryBuilder } from 'knex';
+import { Knex } from 'knex';
 import { forEach, isArray, isObject, isString, negate, omit, pickBy, mapKeys, keys, pick, entries } from 'lodash';
 import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery, Model, CustomFilters } from './repository';
 
 type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
 
-export type QbOption = (qb: QueryBuilder) => any;
+export type QbOption = (qb: Knex.QueryBuilder) => any;
 export interface BookshelfRelationAnyType {
     query?: BookshelfRelationQuery;
 }
@@ -195,7 +195,7 @@ const wildcards = (() => {
         const parentQb = options?.qb;
         options = {
             ...options,
-            qb: (qb: QueryBuilder) => {
+            qb: (qb: Knex.QueryBuilder) => {
                 queries.forEach(q => {
                     qb.where(q.wildcard.field, 'like', queryToSqlLike(q));
                 });
@@ -233,7 +233,7 @@ const rangeQueries = (() => {
         const parentQb = options?.qb;
         options = {
             ...options,
-            qb: (qb: QueryBuilder) => {
+            qb: (qb: Knex.QueryBuilder) => {
                 queries.forEach(q => {
                     const comp = queryToSqlCompare(q);
                     qb.where(q.range.field, comp[0], comp[1]);
@@ -248,7 +248,7 @@ const rangeQueries = (() => {
 })();
 
 const select = (queryParams: any = {}, options: any = {}) => {
-    return (qb: QueryBuilder) => {
+    return (qb: Knex.QueryBuilder) => {
         [queryParams, options] = wildcards(queryParams, options);
         [queryParams, options] = rangeQueries(queryParams, options);
         const arrayQueryParams = pickBy(queryParams, isArray);
@@ -264,15 +264,15 @@ const select = (queryParams: any = {}, options: any = {}) => {
 };
 const count = (options: any = {}, model: ReturnType<typeof createModel>) => {
     // TODO How about now to have a `count` option, but have a clean `.count` method instead
-    if (!options.count) return (qb: QueryBuilder) => qb;
+    if (!options.count) return (qb: Knex.QueryBuilder) => qb;
     const { tableName, idAttribute } = (model as any /* TODO Type */).forge();
 
-    return (qb: QueryBuilder) => {
+    return (qb: Knex.QueryBuilder) => {
         qb.countDistinct(`${tableName}.${idAttribute} AS total`);
     };
 };
 
-const order = (options: any = {}, validFields: string[]): ((qb: QueryBuilder) => any) => {
+const order = (options: any = {}, validFields: string[]): ((qb: Knex.QueryBuilder) => any) => {
     // Skip for missing order, skip for count
     if (!options.order || options.count) return () => {};
     options.order = (typeof options.order === 'string') ? [options.order] : options.order;
@@ -305,7 +305,7 @@ const paginate = (() => {
     };
     return (options = {}) => {
         const { limit, offset } = extractPagination(options);
-        return (qb: QueryBuilder) => {
+        return (qb: Knex.QueryBuilder) => {
             if (limit !== undefined) {
                 qb.limit(limit);
             }
@@ -333,7 +333,7 @@ const queryModel = (model: Model<any>, queryParams?: any, options?: any) => {
             return acc;
         }, {} as any);
     const source = model.getBookshelfModel();
-    return source.query((qb: QueryBuilder) => {
+    return source.query((qb: Knex.QueryBuilder) => {
         applyCustomFilters(model.options.filters, queryParams, options);
         select(filters, options)(qb);
         count(options, source)(qb);

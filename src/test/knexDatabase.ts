@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { default as connect, default as Knex } from 'knex';
+import { knex as connect, Knex } from 'knex';
 import { format as sprintf, promisify } from 'util';
 import * as repository from '../lib/repository';
 
