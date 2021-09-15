@@ -39,13 +39,13 @@
     "bookshelf-cursor-pagination": "^1.4.2",
     "bookshelf-paranoia": "^0.11.0",
     "desmond": "^0.5.6",
-    "knex": "^0.19.5",
+    "knex": "^0.21.21",
     "mysql": "^2.15.0"
   },
   "devDependencies": {
     "jest": "^24.5.0",
     "jest-extended": "^0.11.1",
-    "pg": "^7.18.2",
+    "pg": "^8.7.1",
     "sqlite3": "^4.0.2"
   }
 }
