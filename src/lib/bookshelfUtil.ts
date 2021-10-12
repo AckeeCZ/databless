@@ -1,9 +1,28 @@
-import * as Bookshelf from 'bookshelf';
+
 import { Knex } from 'knex';
 import { forEach, isArray, isObject, isString, negate, omit, pickBy, mapKeys, keys, pick, entries } from 'lodash';
 import { ModelOptions, AttributeRelation, Relation, WildcardQuery, wildcards as repositoryWildcards, rangeQueries as repositoryRangeQueries, RangeQuery, Model, CustomFilters } from './repository';
 
-type BookshelfRelationQuery = (relation: Bookshelf.Collection<any>) => Bookshelf.Collection<any>;
+/* Bare implementation of BS Collection */
+export type Collection = {
+    query: (callback: (qb: Knex.QueryBuilder) => void) => Collection
+    where: (match: { [key: string]: any }, firstOnly: boolean) => Collection;
+    through(
+        interim: any,
+        throughForeignKey?: string,
+        otherKey?: string,
+    ): Collection;
+}
+
+/* Implementation of BS SerializeOptions */
+export interface SerializeOptions {
+    shallow?: boolean | undefined;
+    omitPivot?: boolean | undefined;
+    /** @default true */
+    visibility?: boolean | undefined;
+}
+
+type BookshelfRelationQuery = (relation: Collection) => Collection;
 
 export type QbOption = (qb: Knex.QueryBuilder) => any;
 export interface BookshelfRelationAnyType {
@@ -85,9 +104,9 @@ const bookshelfRelation = {
 
 const createModel = (options: ModelOptions) => {
     const knex: Knex = options.adapter();
-    const bookshelf: Bookshelf = require('bookshelf')(knex);
-    let model: Bookshelf.Model<any>;
-    const modelOptions: Bookshelf.ModelOptions = Object.keys(options.attributes)
+    const bookshelf: any = require('bookshelf')(knex);
+    let model: any;
+    const modelOptions: any = Object.keys(options.attributes)
         .map(key => ({
             name: key,
             value: options.attributes[key],
@@ -98,7 +117,7 @@ const createModel = (options: ModelOptions) => {
                 ? () => model
                 : () => (attribute.value.targetModel as any /* WTF Type :( */)().getBookshelfModel();
             // Allow fine relation query
-            const relationQuery = (relation: Bookshelf.Collection<any>) => {
+            const relationQuery = (relation: Collection) => {
                 if (!attribute.value.relation.query) {
                     return relation;
                 }

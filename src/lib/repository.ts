@@ -1,4 +1,3 @@
-import { SerializeOptions } from 'bookshelf';
 import { Knex } from 'knex';
 import { defaults, flow, isEmpty, memoize, pick, omitBy } from 'lodash';
 import * as bookshelfUtil from './bookshelfUtil';
@@ -44,7 +43,7 @@ export const bookshelfRelation = bookshelfUtil.bookshelfRelation;
 export const patchStringcaseForBookshelf = bookshelfUtil.patchStringcaseForBookshelf;
 
 export interface RepositoryMethodOptions {
-    toJSON?: SerializeOptions;
+    toJSON?: bookshelfUtil.SerializeOptions;
     qb?: bookshelfUtil.QbOption;
 }
 export interface RepositoryDetailOptions<E extends Entity, M extends Metadata<E>> extends RepositoryMethodOptions {
