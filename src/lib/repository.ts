@@ -13,6 +13,9 @@ export type AttributeRelation<R extends Relation = any> = {
     targetModel: (() => Model<any>) | 'self'
     relation: R
 }
+type NullishOptional<T> = {
+    [P in keyof T]: Pick<T, P> extends Required<Pick<T, P>> ? T[P] : T[P] | null;
+};
 type Attributes = Record<string, Attribute>;
 type CustomFilterFunction<T = any> = (value: T, options: RepositoryMethodOptions) => void;
 export type CustomFilters = Record<string, any>;
@@ -58,14 +61,14 @@ export interface RepositoryListOptions<E extends Entity, M extends Metadata<E>> 
 
 type Filters<E extends Entity, M extends Metadata<E>> = Partial<{[key in keyof E]: E[key] | E[key][]} & {[key in keyof M['customFilters']]: M['customFilters'][key] }>;
 
-export const create = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Partial<E>, options?: RepositoryMethodOptions): Promise<E> => {
+export const create = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Partial<NullishOptional<E>>, options?: RepositoryMethodOptions): Promise<E> => {
     data = model.serialize(data);
     const result = await (model.getBookshelfModel().forge())
         .save(pick(data, model.attributeNames), options);
     return bookshelfUtil.serializer(options)(result);
 };
 
-export const createBulk = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Array<Partial<E>>, options?: RepositoryMethodOptions): Promise<unknown> => {
+export const createBulk = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, data: Array<Partial<NullishOptional<E>>>, options?: RepositoryMethodOptions): Promise<unknown> => {
     return model.options.adapter().batchInsert(
         model.options.collectionName,
         data.map(dataItem => model.serialize(dataItem))
@@ -98,12 +101,12 @@ export const detail = async <E extends Entity, M extends Metadata<E>>(model: Mod
 
 /**
  * Return value may vary on driver
- * @param model 
- * @param filter 
- * @param data 
- * @param options 
+ * @param model
+ * @param filter
+ * @param data
+ * @param options
  */
-export const update = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}): Promise<E | undefined> => {
+export const update = async <E extends Entity, M extends Metadata<E>>(model: Model<E, M>, filter: Filters<E, M>, data?: Partial<NullishOptional<E>>, options: RepositoryMethodOptions = {}): Promise<E | undefined> => {
     // TODO `defaultPagination` from master
     data = model.serialize(pick(data, model.attributeNames));
     if (!data || isEmpty(data)) {
@@ -289,13 +292,13 @@ export const getListQueryBuilder = <E extends Entity, M extends Metadata<E>>(mod
 
 export const createRepository = <E extends Entity, M extends Metadata<E>>(model: Model<E, M>) => {
     return {
-        create: (data: Partial<E>, options?: RepositoryMethodOptions) => create(model, data, options),
+        create: (data: Partial<NullishOptional<E>>, options?: RepositoryMethodOptions) => create(model, data, options),
         list: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => list(model, filter, options),
         count: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => count(model, filter, options),
         detail: (filter?: Filters<E, M>, options?: RepositoryDetailOptions<E, M>) => detail(model, filter, options),
-        update: (filter: Filters<E, M>, data?: Partial<E>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
+        update: (filter: Filters<E, M>, data?: Partial<NullishOptional<E>>, options: RepositoryMethodOptions = {}) => update(model, filter, data, options),
         delete: (filter?: Filters<E, M>, options?: RepositoryMethodOptions) => remove(model, filter, options),
-        createBulk: (dataItems: Array<Partial<E>>, options?: RepositoryMethodOptions) => createBulk(model, dataItems, options),
+        createBulk: (dataItems: Array<Partial<NullishOptional<E>>>, options?: RepositoryMethodOptions) => createBulk(model, dataItems, options),
         getListQueryBuilder: (filter?: Filters<E, M>, options?: RepositoryListOptions<E, M>) => getListQueryBuilder(model, filter, options),
     };
 };
