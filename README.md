@@ -1,4 +1,9 @@
+<div align="center">
 
+## DEPRECATION NOTICE
+
+This package is no longer maintained.
+</div>
 
 <div align="center">
 
